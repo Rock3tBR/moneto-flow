@@ -6,7 +6,7 @@ interface Props { onClose: () => void; }
 
 const AddTransactionModal = ({ onClose }: Props) => {
   const { categories, creditCards, addTransaction } = useFinance();
-  const [type, setType] = useState<'income' | 'expense'>('expense');
+  const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -25,8 +25,8 @@ const AddTransactionModal = ({ onClose }: Props) => {
       amount: parseFloat(amount),
       date,
       category_id: categoryId || null,
-      card_id: type === 'expense' && cardId ? cardId : null,
-      installments: type === 'expense' ? installments : 1,
+      card_id: type === 'EXPENSE' && cardId ? cardId : null,
+      installments: type === 'EXPENSE' ? installments : 1,
       current_installment: 1,
     });
     setSubmitting(false);
@@ -46,14 +46,14 @@ const AddTransactionModal = ({ onClose }: Props) => {
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* Type toggle */}
           <div className="flex gap-2">
-            {(['income', 'expense'] as const).map((t) => (
+            {(['INCOME', 'EXPENSE'] as const).map((t) => (
               <button key={t} type="button" onClick={() => setType(t)}
                 className={`flex-1 py-2.5 rounded-2xl text-sm font-semibold transition-all ${
                   type === t
-                    ? (t === 'income' ? 'gradient-income text-foreground' : 'gradient-expense text-foreground')
+                    ? (t === 'INCOME' ? 'gradient-income text-foreground' : 'gradient-expense text-foreground')
                     : 'bg-muted text-muted-foreground'
                 }`}
-              >{t === 'income' ? 'Receita' : 'Despesa'}</button>
+              >{t === 'INCOME' ? 'Receita' : 'Despesa'}</button>
             ))}
           </div>
 
@@ -66,7 +66,7 @@ const AddTransactionModal = ({ onClose }: Props) => {
             {categories.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
           </select>
 
-          {type === 'expense' && (
+          {type === 'EXPENSE' && (
             <>
               <select value={cardId} onChange={(e) => setCardId(e.target.value)} className={inputClass}>
                 <option value="">Saldo (sem cartão)</option>

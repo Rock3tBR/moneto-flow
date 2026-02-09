@@ -21,8 +21,8 @@ const Dashboard = () => {
     return isWithinInterval(d, { start: monthStart, end: monthEnd });
   });
 
-  const income = monthTxs.filter((t) => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
-  const expense = monthTxs.filter((t) => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+  const income = monthTxs.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
+  const expense = monthTxs.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0);
   const balance = income - expense;
   const totalLimit = creditCards.reduce((s, c) => s + Number(c.limit_amount), 0);
   const usedLimit = monthTxs.filter((t) => t.card_id).reduce((s, t) => s + Number(t.amount), 0);
@@ -33,7 +33,7 @@ const Dashboard = () => {
     d.setDate(d.getDate() - 29 + i);
     const dayStr = format(d, 'yyyy-MM-dd');
     const dayExpense = transactions
-      .filter((t) => t.date === dayStr && t.type === 'expense')
+      .filter((t) => t.date === dayStr && t.type === 'EXPENSE')
       .reduce((s, t) => s + Number(t.amount), 0);
     return { day: format(d, 'dd/MM'), value: dayExpense };
   });
@@ -42,7 +42,7 @@ const Dashboard = () => {
   const pieData = categories
     .map((cat) => {
       const total = monthTxs
-        .filter((t) => t.category_id === cat.id && t.type === 'expense')
+        .filter((t) => t.category_id === cat.id && t.type === 'EXPENSE')
         .reduce((s, t) => s + Number(t.amount), 0);
       return { name: cat.name, value: total, icon: cat.icon };
     })
