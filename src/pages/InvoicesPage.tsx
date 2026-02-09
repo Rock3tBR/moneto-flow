@@ -22,14 +22,15 @@ const InvoicesPage = () => {
     transactions
       .filter((t) => t.card_id === card.id && t.type === 'EXPENSE')
       .forEach((t) => {
-        const txDate = parseISO(t.date);
+        const [year, month, day] = t.date.split('-').map(Number);
+        const txDate = new Date(year, month - 1, day);
         const totalInstallments = t.installments || 1;
 
         for (let i = 0; i < totalInstallments; i++) {
           // Determine which invoice month this installment falls into
-          let invoiceMonth: Date;
           const installmentDate = addMonths(txDate, i);
 
+          let invoiceMonth: Date;
           if (installmentDate.getDate() > closingDay) {
             invoiceMonth = addMonths(installmentDate, 1);
           } else {
@@ -37,12 +38,23 @@ const InvoicesPage = () => {
           }
 
           if (invoiceMonth.getMonth() === refMonth && invoiceMonth.getFullYear() === refYear) {
+            // Calculate remaining installments from current month
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+            let monthsPassed = (currentYear - txDate.getFullYear()) * 12 + currentMonth - txDate.getMonth();
+            if (now.getDate() < txDate.getDate()) {
+              monthsPassed--;
+            }
+            monthsPassed = Math.max(0, monthsPassed);
+            const remaining = Math.max(0, totalInstallments - monthsPassed - 1);
+
             const cat = categories.find((c) => c.id === t.category_id);
             items.push({
               description: t.description,
               amount: Number(t.amount) / totalInstallments,
               date: t.date,
-              installmentLabel: totalInstallments > 1 ? `${i + 1}/${totalInstallments}` : undefined,
+              installmentLabel: totalInstallments > 1 ? `${i + 1}/${totalInstallments} (resta ${remaining})` : undefined,
               categoryIcon: cat?.icon,
             });
           }

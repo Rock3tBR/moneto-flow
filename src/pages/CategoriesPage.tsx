@@ -13,7 +13,7 @@ const CategoriesPage = () => {
   const monthEnd = endOfMonth(now);
 
   const monthExpenses = transactions.filter(
-    (t) => t.type === 'expense' && isWithinInterval(parseISO(t.date), { start: monthStart, end: monthEnd })
+    (t) => t.type === 'EXPENSE' && isWithinInterval(parseISO(t.date), { start: monthStart, end: monthEnd })
   );
   const totalExpense = monthExpenses.reduce((s, t) => s + Number(t.amount), 0);
 
