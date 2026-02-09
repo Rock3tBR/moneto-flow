@@ -31,30 +31,19 @@ const InvoicesPage = () => {
           const installmentDate = addMonths(txDate, i);
 
           let invoiceMonth: Date;
-          if (installmentDate.getDate() > closingDay) {
+          if (installmentDate.getDate() >= closingDay) {
             invoiceMonth = addMonths(installmentDate, 1);
           } else {
             invoiceMonth = installmentDate;
           }
 
           if (invoiceMonth.getMonth() === refMonth && invoiceMonth.getFullYear() === refYear) {
-            // Calculate remaining installments from current month
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth();
-            let monthsPassed = (currentYear - txDate.getFullYear()) * 12 + currentMonth - txDate.getMonth();
-            if (now.getDate() < txDate.getDate()) {
-              monthsPassed--;
-            }
-            monthsPassed = Math.max(0, monthsPassed);
-            const remaining = Math.max(0, totalInstallments - monthsPassed - 1);
-
             const cat = categories.find((c) => c.id === t.category_id);
             items.push({
               description: t.description,
               amount: Number(t.amount) / totalInstallments,
               date: t.date,
-              installmentLabel: totalInstallments > 1 ? `${i + 1}/${totalInstallments} (resta ${remaining})` : undefined,
+              installmentLabel: totalInstallments > 1 ? `${i + 1}/${totalInstallments}` : undefined,
               categoryIcon: cat?.icon,
             });
           }
@@ -120,7 +109,7 @@ const InvoicesPage = () => {
                   <div>
                     <p className="text-foreground text-sm font-semibold">{item.description}</p>
                     <p className="text-muted-foreground text-xs">
-                      {format(parseISO(item.date), 'dd/MM/yyyy')}
+                      Compra em {format(parseISO(item.date), 'dd/MM/yyyy')}
                       {item.installmentLabel && <span className="ml-2 text-primary">{item.installmentLabel}</span>}
                     </p>
                   </div>
