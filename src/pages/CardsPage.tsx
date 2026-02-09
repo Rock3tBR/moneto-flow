@@ -20,7 +20,7 @@ const CardsPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in-delay-1">
         {creditCards.map((card) => {
-          const used = transactions.filter((t) => t.card_id === card.id && t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+          const used = transactions.filter((t) => t.card_id === card.id && t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0);
           const limit = Number(card.limit_amount);
           const pct = limit > 0 ? (used / limit) * 100 : 0;
           return (
