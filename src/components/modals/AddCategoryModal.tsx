@@ -2,8 +2,14 @@ import React, { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { X } from 'lucide-react';
 
-const PRESET_COLORS = ['#818cf8', '#34d399', '#f87171', '#fbbf24', '#a78bfa', '#38bdf8', '#fb7185', '#4ade80'];
-const PRESET_ICONS = ['🍔', '🏠', '🚗', '🎮', '👕', '💊', '📚', '✈️', '🎬', '🛒', '💡', '📱'];
+const PRESET_COLORS = [
+  '#818cf8', '#34d399', '#f87171', '#fbbf24', '#a78bfa', '#38bdf8', '#fb7185', '#4ade80',
+  '#f97316', '#06b6d4', '#ec4899', '#8b5cf6', '#14b8a6', '#eab308', '#ef4444', '#3b82f6',
+];
+const PRESET_ICONS = [
+  '🍔', '🏠', '🚗', '🎮', '👕', '💊', '📚', '✈️', '🎬', '🛒', '💡', '📱',
+  '🐾', '🎵', '💼', '🏋️', '☕', '🎁', '💇', '🧹', '🏥', '⛽', '🍺', '💰',
+];
 
 interface Props { onClose: () => void; }
 
