@@ -20,7 +20,7 @@ const InvoicesPage = () => {
     const items: { description: string; amount: number; date: string; installmentLabel?: string; categoryIcon?: string }[] = [];
 
     transactions
-      .filter((t) => t.card_id === card.id && t.type === 'expense')
+      .filter((t) => t.card_id === card.id && t.type === 'EXPENSE')
       .forEach((t) => {
         const txDate = parseISO(t.date);
         const totalInstallments = t.installments || 1;

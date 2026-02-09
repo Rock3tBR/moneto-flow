@@ -15,7 +15,7 @@ const SimulationPage = () => {
   const installmentValue = installments > 0 ? totalAmount / installments : 0;
 
   const usedLimit = transactions
-    .filter((t) => t.card_id === cardId && t.type === 'expense')
+    .filter((t) => t.card_id === cardId && t.type === 'EXPENSE')
     .reduce((s, t) => s + Number(t.amount), 0);
 
   const availableLimit = card ? Number(card.limit_amount) - usedLimit : 0;

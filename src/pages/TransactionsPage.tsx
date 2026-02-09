@@ -8,7 +8,7 @@ import AddTransactionModal from '@/components/modals/AddTransactionModal';
 const TransactionsPage = () => {
   const { transactions, categories } = useFinance();
   const { deleteTransaction } = useFinance();
-  const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
+  const [filter, setFilter] = useState<'all' | 'INCOME' | 'EXPENSE'>('all');
   const [catFilter, setCatFilter] = useState<string>('all');
   const [showAdd, setShowAdd] = useState(false);
 
@@ -32,7 +32,7 @@ const TransactionsPage = () => {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2 animate-in-delay-1">
-        {(['all', 'income', 'expense'] as const).map((f) => (
+        {(['all', 'INCOME', 'EXPENSE'] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -40,7 +40,7 @@ const TransactionsPage = () => {
               filter === f ? 'gradient-primary text-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'
             }`}
           >
-            {f === 'all' ? 'Todos' : f === 'income' ? 'Receitas' : 'Despesas'}
+            {f === 'all' ? 'Todos' : f === 'INCOME' ? 'Receitas' : 'Despesas'}
           </button>
         ))}
         <select
@@ -64,9 +64,9 @@ const TransactionsPage = () => {
             <div key={t.id} className="glass rounded-2xl p-4 flex items-center justify-between group">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
-                  t.type === 'income' ? 'gradient-income' : 'gradient-expense'
+                  t.type === 'INCOME' ? 'gradient-income' : 'gradient-expense'
                 }`}>
-                  {cat?.icon || (t.type === 'income' ? '💰' : '💸')}
+                  {cat?.icon || (t.type === 'INCOME' ? '💰' : '💸')}
                 </div>
                 <div>
                   <p className="text-foreground font-semibold text-sm">{t.description}</p>
@@ -79,8 +79,8 @@ const TransactionsPage = () => {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`font-bold ${t.type === 'income' ? 'text-income' : 'text-expense'}`}>
-                  {t.type === 'income' ? '+' : '-'} {fmt(Number(t.amount))}
+                <span className={`font-bold ${t.type === 'INCOME' ? 'text-income' : 'text-expense'}`}>
+                  {t.type === 'INCOME' ? '+' : '-'} {fmt(Number(t.amount))}
                 </span>
                 <button
                   onClick={() => deleteTransaction(t.id)}
