@@ -1,20 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
-import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval } from 'date-fns';
+import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval, subMonths, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { TrendingUp, TrendingDown, Wallet, CreditCard } from 'lucide-react';
-import { AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { TrendingUp, TrendingDown, Wallet, CreditCard, PiggyBank, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import AddTransactionModal from '@/components/modals/AddTransactionModal';
 
 const COLORS = ['hsl(234, 89%, 74%)', 'hsl(160, 84%, 39%)', 'hsl(347, 77%, 50%)', 'hsl(38, 92%, 50%)', 'hsl(280, 65%, 60%)', 'hsl(200, 70%, 55%)'];
 
 const Dashboard = () => {
-  const { transactions, categories, creditCards } = useFinance();
+  const { transactions, categories, creditCards, savingsGoals, savingsTransactions, recurringExpenses } = useFinance();
   const [showAddTx, setShowAddTx] = useState(false);
+  const [monthOffset, setMonthOffset] = useState(0);
+  const [dayRange, setDayRange] = useState(30);
 
-  const now = new Date();
-  const monthStart = startOfMonth(now);
-  const monthEnd = endOfMonth(now);
+  const refDate = addMonths(new Date(), monthOffset);
+  const monthStart = startOfMonth(refDate);
+  const monthEnd = endOfMonth(refDate);
 
   const monthTxs = transactions.filter((t) => {
     const d = parseISO(t.date);
@@ -23,22 +25,37 @@ const Dashboard = () => {
 
   const income = monthTxs.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
   const expense = monthTxs.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0);
-  const balance = income - expense;
+
+  // Pé de Meia total
+  const totalSavings = savingsGoals.reduce((sum, g) => {
+    return sum + savingsTransactions
+      .filter((t) => t.goal_id === g.id)
+      .reduce((s, t) => s + (t.type === 'DEPOSIT' ? Number(t.amount) : -Number(t.amount)), 0);
+  }, 0);
+
+  // Saldo correto: Receitas - Despesas - Pé de Meia
+  const balance = income - expense - totalSavings;
+
+  // Limite dos cartões - calculado com TODAS as transações vinculadas (não só do mês)
   const totalLimit = creditCards.reduce((s, c) => s + Number(c.limit_amount), 0);
-  const usedLimit = monthTxs.filter((t) => t.card_id).reduce((s, t) => s + Number(t.amount), 0);
+  const usedLimit = transactions
+    .filter((t) => t.card_id && t.type === 'EXPENSE')
+    .reduce((s, t) => s + Number(t.amount), 0);
 
-  // Area chart data - last 30 days grouped by day
-  const areaData = Array.from({ length: 30 }, (_, i) => {
-    const d = new Date(now);
-    d.setDate(d.getDate() - 29 + i);
-    const dayStr = format(d, 'yyyy-MM-dd');
-    const dayExpense = transactions
-      .filter((t) => t.date === dayStr && t.type === 'EXPENSE')
-      .reduce((s, t) => s + Number(t.amount), 0);
-    return { day: format(d, 'dd/MM'), value: dayExpense };
-  });
+  // Area chart - gastos nos últimos N dias a partir da data de referência
+  const areaData = useMemo(() => {
+    return Array.from({ length: dayRange }, (_, i) => {
+      const d = new Date(refDate);
+      d.setDate(d.getDate() - dayRange + 1 + i);
+      const dayStr = format(d, 'yyyy-MM-dd');
+      const dayExpense = transactions
+        .filter((t) => t.date === dayStr && t.type === 'EXPENSE')
+        .reduce((s, t) => s + Number(t.amount), 0);
+      return { day: format(d, 'dd/MM'), value: dayExpense };
+    });
+  }, [transactions, dayRange, monthOffset]);
 
-  // Pie chart data
+  // Gastos por categoria
   const pieData = categories
     .map((cat) => {
       const total = monthTxs
@@ -48,13 +65,31 @@ const Dashboard = () => {
     })
     .filter((d) => d.value > 0);
 
+  // Gastos por cartão
+  const cardData = creditCards.map((card) => {
+    const total = monthTxs
+      .filter((t) => t.card_id === card.id && t.type === 'EXPENSE')
+      .reduce((s, t) => s + Number(t.amount), 0);
+    return { name: card.name, value: total };
+  }).filter((d) => d.value > 0);
+
+  // Pé de Meia por meta (para gráfico)
+  const savingsPieData = savingsGoals
+    .map((g) => {
+      const bal = savingsTransactions
+        .filter((t) => t.goal_id === g.id)
+        .reduce((s, t) => s + (t.type === 'DEPOSIT' ? Number(t.amount) : -Number(t.amount)), 0);
+      return { name: g.name, value: Math.max(bal, 0), icon: g.icon };
+    })
+    .filter((d) => d.value > 0);
+
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const summaryCards = [
     { label: 'RECEITAS', value: income, icon: TrendingUp, variant: 'income' as const },
     { label: 'DESPESAS', value: expense, icon: TrendingDown, variant: 'expense' as const },
     { label: 'SALDO', value: balance, icon: Wallet, variant: 'primary' as const },
-    { label: 'LIMITE DISPONÍVEL', value: totalLimit - usedLimit, icon: CreditCard, variant: 'warning' as const },
+    { label: 'PÉ DE MEIA', value: totalSavings, icon: PiggyBank, variant: 'warning' as const },
   ];
 
   return (
@@ -62,9 +97,18 @@ const Dashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl lg:text-3xl font-black text-foreground animate-in">Dashboard</h1>
-          <p className="text-muted-foreground text-sm uppercase tracking-widest animate-in-delay-1">
-            {format(now, "MMMM 'de' yyyy", { locale: ptBR })}
-          </p>
+          {/* Month nav */}
+          <div className="flex items-center gap-3 mt-1 animate-in-delay-1">
+            <button onClick={() => setMonthOffset((o) => o - 1)} className="p-1 rounded-lg hover:bg-muted transition-colors">
+              <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+            </button>
+            <span className="text-muted-foreground text-sm uppercase tracking-widest capitalize">
+              {format(refDate, "MMMM 'de' yyyy", { locale: ptBR })}
+            </span>
+            <button onClick={() => setMonthOffset((o) => o + 1)} className="p-1 rounded-lg hover:bg-muted transition-colors">
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
         </div>
         <button
           onClick={() => setShowAddTx(true)}
@@ -94,10 +138,45 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Charts */}
+      {/* Limite dos cartões */}
+      {creditCards.length > 0 && (
+        <div className="glass rounded-3xl p-5 animate-in-delay-2">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Limite de Cartões</h3>
+            <span className="text-foreground font-bold">{fmt(totalLimit - usedLimit)} disponível</span>
+          </div>
+          <div className="w-full bg-muted rounded-full h-3">
+            <div
+              className="h-3 rounded-full gradient-warning transition-all"
+              style={{ width: `${Math.min((usedLimit / totalLimit) * 100, 100)}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground mt-2">
+            <span>Usado: {fmt(usedLimit)}</span>
+            <span>Limite: {fmt(totalLimit)}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Charts Row 1: Evolução + Categorias */}
       <div className="grid lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 glass rounded-3xl p-5">
-          <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-4">Evolução de Gastos</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Evolução de Gastos</h3>
+            <div className="flex gap-1">
+              {[7, 15, 30].map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setDayRange(d)}
+                  className={`px-3 py-1 rounded-xl text-xs font-medium transition-all ${
+                    dayRange === d ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {d}d
+                </button>
+              ))}
+            </div>
+          </div>
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={areaData}>
               <defs>
@@ -144,6 +223,60 @@ const Dashboard = () => {
             </>
           ) : (
             <p className="text-muted-foreground text-sm text-center py-10">Sem dados este mês</p>
+          )}
+        </div>
+      </div>
+
+      {/* Charts Row 2: Por cartão + Pé de Meia */}
+      <div className="grid lg:grid-cols-2 gap-4">
+        {/* Gastos por cartão */}
+        <div className="glass rounded-3xl p-5">
+          <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-4">Gastos por Cartão</h3>
+          {cardData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={cardData} layout="vertical">
+                <XAxis type="number" tick={{ fill: 'hsl(215, 20%, 55%)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" tick={{ fill: 'hsl(215, 20%, 55%)', fontSize: 11 }} axisLine={false} tickLine={false} width={100} />
+                <Tooltip
+                  contentStyle={{ background: 'hsl(222, 47%, 9%)', border: '1px solid hsl(217, 33%, 17%)', borderRadius: '1rem', color: 'hsl(210, 40%, 96%)' }}
+                  formatter={(v: number) => [fmt(v), 'Gasto']}
+                />
+                <Bar dataKey="value" fill="hsl(234, 89%, 74%)" radius={[0, 8, 8, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-muted-foreground text-sm text-center py-10">Sem gastos em cartão este mês</p>
+          )}
+        </div>
+
+        {/* Pé de Meia */}
+        <div className="glass rounded-3xl p-5">
+          <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-4">Pé de Meia</h3>
+          {savingsPieData.length > 0 ? (
+            <>
+              <ResponsiveContainer width="100%" height={160}>
+                <PieChart>
+                  <Pie data={savingsPieData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} dataKey="value" stroke="none">
+                    {savingsPieData.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-2 mt-2">
+                {savingsPieData.map((d, i) => (
+                  <div key={d.name} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                      <span className="text-muted-foreground">{d.icon} {d.name}</span>
+                    </div>
+                    <span className="text-foreground font-semibold">{fmt(d.value)}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="text-muted-foreground text-sm text-center py-10">Nenhuma reserva criada</p>
           )}
         </div>
       </div>

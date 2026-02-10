@@ -71,6 +71,128 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_expenses: {
+        Row: {
+          active: boolean
+          amount: number
+          card_id: string | null
+          category_id: string | null
+          created_at: string | null
+          day_of_month: number
+          description: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          amount: number
+          card_id?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          day_of_month?: number
+          description: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          card_id?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          day_of_month?: number
+          description?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_expenses_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_goals: {
+        Row: {
+          color: string
+          created_at: string | null
+          icon: string
+          id: string
+          name: string
+          target_amount: number
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string | null
+          icon?: string
+          id?: string
+          name: string
+          target_amount?: number
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          icon?: string
+          id?: string
+          name?: string
+          target_amount?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      savings_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          date: string
+          description: string | null
+          goal_id: string
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          goal_id: string
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          goal_id?: string
+          id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_transactions_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "savings_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number
