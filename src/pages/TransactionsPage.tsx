@@ -6,13 +6,19 @@ import { Trash2 } from 'lucide-react';
 import AddTransactionModal from '@/components/modals/AddTransactionModal';
 
 const TransactionsPage = () => {
-  const { transactions, categories } = useFinance();
+  const { transactions, categories, recurringExpenses } = useFinance();
   const { deleteTransaction } = useFinance();
-  const [filter, setFilter] = useState<'all' | 'INCOME' | 'EXPENSE'>('all');
+  const [filter, setFilter] = useState<'all' | 'INCOME' | 'EXPENSE' | 'FIXED'>('all');
   const [catFilter, setCatFilter] = useState<string>('all');
   const [showAdd, setShowAdd] = useState(false);
 
+  // Build set of recurring expense descriptions for "fixed" filter
+  const fixedDescriptions = new Set(recurringExpenses.map((r) => r.description.toLowerCase()));
+
   const filtered = transactions.filter((t) => {
+    if (filter === 'FIXED') {
+      return t.type === 'EXPENSE' && fixedDescriptions.has(t.description.toLowerCase());
+    }
     if (filter !== 'all' && t.type !== filter) return false;
     if (catFilter !== 'all' && t.category_id !== catFilter) return false;
     return true;
@@ -32,15 +38,20 @@ const TransactionsPage = () => {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2 animate-in-delay-1">
-        {(['all', 'INCOME', 'EXPENSE'] as const).map((f) => (
+        {([
+          { key: 'all', label: 'Todos' },
+          { key: 'INCOME', label: 'Receitas' },
+          { key: 'EXPENSE', label: 'Despesas' },
+          { key: 'FIXED', label: 'Gastos Fixos' },
+        ] as const).map((f) => (
           <button
-            key={f}
-            onClick={() => setFilter(f)}
+            key={f.key}
+            onClick={() => setFilter(f.key)}
             className={`px-4 py-2 rounded-2xl text-sm font-medium transition-all ${
-              filter === f ? 'gradient-primary text-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'
+              filter === f.key ? 'gradient-primary text-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'
             }`}
           >
-            {f === 'all' ? 'Todos' : f === 'INCOME' ? 'Receitas' : 'Despesas'}
+            {f.label}
           </button>
         ))}
         <select
@@ -60,6 +71,7 @@ const TransactionsPage = () => {
         {filtered.length === 0 && <p className="text-muted-foreground text-center py-10">Nenhuma transação encontrada</p>}
         {filtered.map((t) => {
           const cat = getCat(t.category_id);
+          const isFixed = fixedDescriptions.has(t.description.toLowerCase());
           return (
             <div key={t.id} className="glass rounded-2xl p-4 flex items-center justify-between group">
               <div className="flex items-center gap-3">
@@ -69,7 +81,12 @@ const TransactionsPage = () => {
                   {cat?.icon || (t.type === 'INCOME' ? '💰' : '💸')}
                 </div>
                 <div>
-                  <p className="text-foreground font-semibold text-sm">{t.description}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-foreground font-semibold text-sm">{t.description}</p>
+                    {isFixed && (
+                      <span className="text-[10px] uppercase tracking-widest bg-primary/10 text-primary px-2 py-0.5 rounded-lg">Fixo</span>
+                    )}
+                  </div>
                   <p className="text-muted-foreground text-xs">
                     {format(parseISO(t.date), "dd MMM yyyy", { locale: ptBR })}
                     {t.installments && t.installments > 1 && (

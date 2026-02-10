@@ -11,6 +11,8 @@ import {
   LogOut,
   Wallet,
   RefreshCw,
+  PiggyBank,
+  Repeat,
 } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
 
@@ -20,6 +22,8 @@ const navItems = [
   { to: '/categories', icon: Tag, label: 'Categorias' },
   { to: '/cards', icon: CreditCard, label: 'Cartões' },
   { to: '/invoices', icon: FileText, label: 'Faturas' },
+  { to: '/savings', icon: PiggyBank, label: 'Pé de Meia' },
+  { to: '/recurring', icon: Repeat, label: 'Gastos Fixos' },
   { to: '/simulation', icon: Calculator, label: 'Simulação' },
 ];
 
@@ -93,7 +97,7 @@ const AppLayout = () => {
 
       {/* Mobile Bottom Nav */}
       <nav className="lg:hidden fixed bottom-6 left-4 right-4 glass-strong rounded-3xl py-2 px-2 flex justify-around z-30 shadow-2xl">
-        {navItems.slice(0, 5).map((item) => (
+        {navItems.slice(0, 6).map((item) => (
           <RouterNavLink
             key={item.to}
             to={item.to}
