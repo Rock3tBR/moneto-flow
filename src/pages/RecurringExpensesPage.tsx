@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
-import { Plus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Trash2, ToggleLeft, ToggleRight, Pencil, CalendarClock } from 'lucide-react';
 import AddRecurringExpenseModal from '@/components/modals/AddRecurringExpenseModal';
+import type { Tables } from '@/integrations/supabase/types';
+
+type RecurringExpense = Tables<'recurring_expenses'>;
 
 const RecurringExpensesPage = () => {
   const { recurringExpenses, categories, creditCards, updateRecurringExpense, deleteRecurringExpense } = useFinance();
   const [showAdd, setShowAdd] = useState(false);
+  const [editItem, setEditItem] = useState<RecurringExpense | null>(null);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const totalActive = recurringExpenses
-    .filter((r) => r.active)
-    .reduce((s, r) => s + Number(r.amount), 0);
+  const totalActive = recurringExpenses.filter((r) => r.active).reduce((s, r) => s + Number(r.amount), 0);
 
   return (
     <div className="p-4 lg:p-8 space-y-6">
@@ -25,16 +27,20 @@ const RecurringExpensesPage = () => {
         </button>
       </div>
 
-      {/* Total */}
       <div className="glass rounded-3xl p-5 text-center animate-in-delay-1">
         <p className="text-xs uppercase tracking-widest text-muted-foreground">Total Mensal Ativo</p>
         <p className="text-3xl font-black text-expense mt-1">{fmt(totalActive)}</p>
       </div>
 
-      {/* List */}
       <div className="space-y-2 animate-in-delay-2">
         {recurringExpenses.length === 0 && (
-          <p className="text-muted-foreground text-center py-10">Nenhum gasto fixo cadastrado</p>
+          <div className="glass rounded-3xl p-8 text-center space-y-3">
+            <CalendarClock className="w-12 h-12 text-muted-foreground mx-auto" />
+            <p className="text-foreground font-bold">Nenhum gasto fixo cadastrado</p>
+            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+              Cadastre seus gastos recorrentes como aluguel, streaming, academia, etc. Eles serão contabilizados automaticamente todo mês.
+            </p>
+          </div>
         )}
         {recurringExpenses.map((r) => {
           const cat = categories.find((c) => c.id === r.category_id);
@@ -54,17 +60,17 @@ const RecurringExpensesPage = () => {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-expense font-bold">{fmt(Number(r.amount))}</span>
+                <button onClick={() => setEditItem(r)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all">
+                  <Pencil className="w-4 h-4" />
+                </button>
                 <button
-                  onClick={() => updateRecurringExpense(r.id, !r.active)}
+                  onClick={() => updateRecurringExpense(r.id, { active: !r.active })}
                   className="text-muted-foreground hover:text-foreground transition-colors"
                   title={r.active ? 'Desativar' : 'Ativar'}
                 >
                   {r.active ? <ToggleRight className="w-6 h-6 text-income" /> : <ToggleLeft className="w-6 h-6" />}
                 </button>
-                <button
-                  onClick={() => deleteRecurringExpense(r.id)}
-                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-expense transition-all"
-                >
+                <button onClick={() => deleteRecurringExpense(r.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-expense transition-all">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -73,7 +79,12 @@ const RecurringExpensesPage = () => {
         })}
       </div>
 
-      {showAdd && <AddRecurringExpenseModal onClose={() => setShowAdd(false)} />}
+      {(showAdd || editItem) && (
+        <AddRecurringExpenseModal
+          editData={editItem || undefined}
+          onClose={() => { setShowAdd(false); setEditItem(null); }}
+        />
+      )}
     </div>
   );
 };

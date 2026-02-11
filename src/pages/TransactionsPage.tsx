@@ -2,23 +2,23 @@ import React, { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Pencil } from 'lucide-react';
 import AddTransactionModal from '@/components/modals/AddTransactionModal';
+import type { Tables } from '@/integrations/supabase/types';
+
+type Transaction = Tables<'transactions'>;
 
 const TransactionsPage = () => {
-  const { transactions, categories, recurringExpenses } = useFinance();
-  const { deleteTransaction } = useFinance();
+  const { transactions, categories, recurringExpenses, deleteTransaction } = useFinance();
   const [filter, setFilter] = useState<'all' | 'INCOME' | 'EXPENSE' | 'FIXED'>('all');
   const [catFilter, setCatFilter] = useState<string>('all');
   const [showAdd, setShowAdd] = useState(false);
+  const [editItem, setEditItem] = useState<Transaction | null>(null);
 
-  // Build set of recurring expense descriptions for "fixed" filter
   const fixedDescriptions = new Set(recurringExpenses.map((r) => r.description.toLowerCase()));
 
   const filtered = transactions.filter((t) => {
-    if (filter === 'FIXED') {
-      return t.type === 'EXPENSE' && fixedDescriptions.has(t.description.toLowerCase());
-    }
+    if (filter === 'FIXED') return t.type === 'EXPENSE' && fixedDescriptions.has(t.description.toLowerCase());
     if (filter !== 'all' && t.type !== filter) return false;
     if (catFilter !== 'all' && t.category_id !== catFilter) return false;
     return true;
@@ -36,7 +36,6 @@ const TransactionsPage = () => {
         </button>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-2 animate-in-delay-1">
         {([
           { key: 'all', label: 'Todos' },
@@ -44,29 +43,20 @@ const TransactionsPage = () => {
           { key: 'EXPENSE', label: 'Despesas' },
           { key: 'FIXED', label: 'Gastos Fixos' },
         ] as const).map((f) => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
+          <button key={f.key} onClick={() => setFilter(f.key)}
             className={`px-4 py-2 rounded-2xl text-sm font-medium transition-all ${
               filter === f.key ? 'gradient-primary text-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'
             }`}
-          >
-            {f.label}
-          </button>
+          >{f.label}</button>
         ))}
-        <select
-          value={catFilter}
-          onChange={(e) => setCatFilter(e.target.value)}
+        <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)}
           className="px-4 py-2 rounded-2xl text-sm bg-muted text-foreground border border-border"
         >
           <option value="all">Todas categorias</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
-          ))}
+          {categories.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
         </select>
       </div>
 
-      {/* List */}
       <div className="space-y-2 animate-in-delay-2">
         {filtered.length === 0 && <p className="text-muted-foreground text-center py-10">Nenhuma transação encontrada</p>}
         {filtered.map((t) => {
@@ -99,10 +89,10 @@ const TransactionsPage = () => {
                 <span className={`font-bold ${t.type === 'INCOME' ? 'text-income' : 'text-expense'}`}>
                   {t.type === 'INCOME' ? '+' : '-'} {fmt(Number(t.amount))}
                 </span>
-                <button
-                  onClick={() => deleteTransaction(t.id)}
-                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-expense transition-all"
-                >
+                <button onClick={() => setEditItem(t)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all">
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button onClick={() => deleteTransaction(t.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-expense transition-all">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -111,7 +101,12 @@ const TransactionsPage = () => {
         })}
       </div>
 
-      {showAdd && <AddTransactionModal onClose={() => setShowAdd(false)} />}
+      {(showAdd || editItem) && (
+        <AddTransactionModal
+          editData={editItem || undefined}
+          onClose={() => { setShowAdd(false); setEditItem(null); }}
+        />
+      )}
     </div>
   );
 };

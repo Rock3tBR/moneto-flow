@@ -51,9 +51,18 @@ const AddSavingsTransactionModal = ({ goalId, onClose }: Props) => {
             ))}
           </div>
 
-          <input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Valor" className={inputClass} required />
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} required />
-          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrição (opcional)" className={inputClass} />
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Valor da movimentação</label>
+            <input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" className={inputClass} required />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Data</label>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} required />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Descrição (opcional)</label>
+            <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex: Sobra do mês" className={inputClass} />
+          </div>
 
           <button type="submit" disabled={submitting} className="w-full py-3 gradient-primary rounded-2xl text-foreground font-bold hover:opacity-90 transition-opacity disabled:opacity-50">
             {submitting ? 'Salvando...' : 'Confirmar'}
