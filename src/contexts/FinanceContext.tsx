@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
-import type { Tables, TablesInsert } from '@/integrations/supabase/types';
+import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import { addMonths } from 'date-fns';
 
 type Transaction = Tables<'transactions'>;
 type Category = Tables<'categories'>;
@@ -20,17 +21,21 @@ interface FinanceContextType {
   loading: boolean;
   fetchData: () => Promise<void>;
   addTransaction: (t: TablesInsert<'transactions'>) => Promise<void>;
+  updateTransaction: (id: string, t: TablesUpdate<'transactions'>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   addCategory: (c: TablesInsert<'categories'>) => Promise<void>;
+  updateCategory: (id: string, c: TablesUpdate<'categories'>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   addCreditCard: (c: TablesInsert<'credit_cards'>) => Promise<void>;
+  updateCreditCard: (id: string, c: TablesUpdate<'credit_cards'>) => Promise<void>;
   deleteCreditCard: (id: string) => Promise<void>;
   addSavingsGoal: (g: TablesInsert<'savings_goals'>) => Promise<void>;
+  updateSavingsGoal: (id: string, g: TablesUpdate<'savings_goals'>) => Promise<void>;
   deleteSavingsGoal: (id: string) => Promise<void>;
   addSavingsTransaction: (t: TablesInsert<'savings_transactions'>) => Promise<void>;
   deleteSavingsTransaction: (id: string) => Promise<void>;
   addRecurringExpense: (r: TablesInsert<'recurring_expenses'>) => Promise<void>;
-  updateRecurringExpense: (id: string, active: boolean) => Promise<void>;
+  updateRecurringExpense: (id: string, data: TablesUpdate<'recurring_expenses'>) => Promise<void>;
   deleteRecurringExpense: (id: string) => Promise<void>;
 }
 
@@ -70,9 +75,40 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     fetchData();
   }, [fetchData]);
 
+  // When adding a transaction with installments > 1, create one row per installment
   const addTransaction = async (t: TablesInsert<'transactions'>) => {
-    const { error } = await supabase.from('transactions').insert({ ...t, user_id: user!.id });
+    const installments = t.installments && t.installments > 1 ? t.installments : 1;
+    const installmentAmount = Number(t.amount) / installments;
+
+    if (installments === 1) {
+      const { error } = await supabase.from('transactions').insert({ ...t, user_id: user!.id });
+      if (!error) await fetchData();
+      return;
+    }
+
+    // Create multiple installment rows
+    const rows: TablesInsert<'transactions'>[] = [];
+    const baseDate = new Date(t.date + 'T00:00:00');
+    for (let i = 0; i < installments; i++) {
+      const installmentDate = addMonths(baseDate, i);
+      const dateStr = installmentDate.toISOString().slice(0, 10);
+      rows.push({
+        ...t,
+        user_id: user!.id,
+        amount: installmentAmount,
+        date: dateStr,
+        installments,
+        current_installment: i + 1,
+        description: t.description,
+      });
+    }
+    const { error } = await supabase.from('transactions').insert(rows);
     if (!error) await fetchData();
+  };
+
+  const updateTransaction = async (id: string, t: TablesUpdate<'transactions'>) => {
+    await supabase.from('transactions').update(t).eq('id', id);
+    await fetchData();
   };
 
   const deleteTransaction = async (id: string) => {
@@ -85,6 +121,11 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     if (!error) await fetchData();
   };
 
+  const updateCategory = async (id: string, c: TablesUpdate<'categories'>) => {
+    await supabase.from('categories').update(c).eq('id', id);
+    await fetchData();
+  };
+
   const deleteCategory = async (id: string) => {
     await supabase.from('categories').delete().eq('id', id);
     await fetchData();
@@ -95,6 +136,11 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     if (!error) await fetchData();
   };
 
+  const updateCreditCard = async (id: string, c: TablesUpdate<'credit_cards'>) => {
+    await supabase.from('credit_cards').update(c).eq('id', id);
+    await fetchData();
+  };
+
   const deleteCreditCard = async (id: string) => {
     await supabase.from('credit_cards').delete().eq('id', id);
     await fetchData();
@@ -103,6 +149,11 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   const addSavingsGoal = async (g: TablesInsert<'savings_goals'>) => {
     const { error } = await supabase.from('savings_goals').insert({ ...g, user_id: user!.id });
     if (!error) await fetchData();
+  };
+
+  const updateSavingsGoal = async (id: string, g: TablesUpdate<'savings_goals'>) => {
+    await supabase.from('savings_goals').update(g).eq('id', id);
+    await fetchData();
   };
 
   const deleteSavingsGoal = async (id: string) => {
@@ -125,8 +176,8 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     if (!error) await fetchData();
   };
 
-  const updateRecurringExpense = async (id: string, active: boolean) => {
-    await supabase.from('recurring_expenses').update({ active }).eq('id', id);
+  const updateRecurringExpense = async (id: string, data: TablesUpdate<'recurring_expenses'>) => {
+    await supabase.from('recurring_expenses').update(data).eq('id', id);
     await fetchData();
   };
 
@@ -139,10 +190,10 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     <FinanceContext.Provider value={{
       transactions, categories, creditCards, savingsGoals, savingsTransactions, recurringExpenses,
       loading, fetchData,
-      addTransaction, deleteTransaction,
-      addCategory, deleteCategory,
-      addCreditCard, deleteCreditCard,
-      addSavingsGoal, deleteSavingsGoal,
+      addTransaction, updateTransaction, deleteTransaction,
+      addCategory, updateCategory, deleteCategory,
+      addCreditCard, updateCreditCard, deleteCreditCard,
+      addSavingsGoal, updateSavingsGoal, deleteSavingsGoal,
       addSavingsTransaction, deleteSavingsTransaction,
       addRecurringExpense, updateRecurringExpense, deleteRecurringExpense,
     }}>

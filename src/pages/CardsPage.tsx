@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Pencil, CreditCard } from 'lucide-react';
 import AddCardModal from '@/components/modals/AddCardModal';
+import type { Tables } from '@/integrations/supabase/types';
+
+type CreditCardType = Tables<'credit_cards'>;
 
 const CardsPage = () => {
   const { creditCards, transactions, deleteCreditCard } = useFinance();
   const [showAdd, setShowAdd] = useState(false);
+  const [editItem, setEditItem] = useState<CreditCardType | null>(null);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -25,7 +29,6 @@ const CardsPage = () => {
           const pct = limit > 0 ? (used / limit) * 100 : 0;
           return (
             <div key={card.id} className="relative overflow-hidden rounded-3xl p-6 gradient-primary shadow-2xl group min-h-[200px] flex flex-col justify-between">
-              {/* Decorative circles */}
               <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-foreground/5" />
               <div className="absolute -right-4 top-12 w-24 h-24 rounded-full bg-foreground/5" />
 
@@ -34,9 +37,14 @@ const CardsPage = () => {
                   <p className="text-foreground/70 text-xs uppercase tracking-widest">Cartão de Crédito</p>
                   <p className="text-foreground text-xl font-black mt-1">{card.name}</p>
                 </div>
-                <button onClick={() => deleteCreditCard(card.id)} className="opacity-0 group-hover:opacity-100 text-foreground/50 hover:text-foreground transition-all">
-                  <Trash2 className="w-5 h-5" />
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => setEditItem(card)} className="opacity-0 group-hover:opacity-100 text-foreground/50 hover:text-foreground transition-all">
+                    <Pencil className="w-5 h-5" />
+                  </button>
+                  <button onClick={() => deleteCreditCard(card.id)} className="opacity-0 group-hover:opacity-100 text-foreground/50 hover:text-foreground transition-all">
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
               <div className="relative z-10 space-y-3">
@@ -45,10 +53,7 @@ const CardsPage = () => {
                   <span>Limite: {fmt(limit)}</span>
                 </div>
                 <div className="w-full bg-foreground/20 rounded-full h-2.5">
-                  <div
-                    className="h-2.5 rounded-full transition-all bg-foreground/70"
-                    style={{ width: `${Math.min(pct, 100)}%` }}
-                  />
+                  <div className="h-2.5 rounded-full transition-all bg-foreground/70" style={{ width: `${Math.min(pct, 100)}%` }} />
                 </div>
                 <div className="flex justify-between text-xs text-foreground/60">
                   <span>Fecha dia {card.closing_day}</span>
@@ -58,10 +63,24 @@ const CardsPage = () => {
             </div>
           );
         })}
-        {creditCards.length === 0 && <p className="text-muted-foreground col-span-full text-center py-10">Nenhum cartão cadastrado</p>}
+
+        {creditCards.length === 0 && (
+          <div className="col-span-full glass rounded-3xl p-8 text-center space-y-3">
+            <CreditCard className="w-12 h-12 text-muted-foreground mx-auto" />
+            <p className="text-foreground font-bold">Nenhum cartão cadastrado</p>
+            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+              Cadastre seus cartões de crédito para acompanhar faturas, limites disponíveis e gastos parcelados.
+            </p>
+          </div>
+        )}
       </div>
 
-      {showAdd && <AddCardModal onClose={() => setShowAdd(false)} />}
+      {(showAdd || editItem) && (
+        <AddCardModal
+          editData={editItem || undefined}
+          onClose={() => { setShowAdd(false); setEditItem(null); }}
+        />
+      )}
     </div>
   );
 };

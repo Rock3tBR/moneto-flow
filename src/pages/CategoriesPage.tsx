@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { startOfMonth, endOfMonth, parseISO, isWithinInterval } from 'date-fns';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Pencil, FolderOpen } from 'lucide-react';
 import AddCategoryModal from '@/components/modals/AddCategoryModal';
+import type { Tables } from '@/integrations/supabase/types';
+
+type Category = Tables<'categories'>;
 
 const CategoriesPage = () => {
   const { categories, transactions, deleteCategory } = useFinance();
   const [showAdd, setShowAdd] = useState(false);
+  const [editItem, setEditItem] = useState<Category | null>(null);
 
   const now = new Date();
   const monthStart = startOfMonth(now);
@@ -44,9 +48,14 @@ const CategoriesPage = () => {
                     <p className="text-muted-foreground text-xs">{fmt(spent)} este mês</p>
                   </div>
                 </div>
-                <button onClick={() => deleteCategory(cat.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-expense transition-all">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex gap-1">
+                  <button onClick={() => setEditItem(cat)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all">
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => deleteCategory(cat.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-expense transition-all">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               <div className="w-full bg-muted rounded-full h-2">
                 <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: cat.color }} />
@@ -55,10 +64,24 @@ const CategoriesPage = () => {
             </div>
           );
         })}
-        {categories.length === 0 && <p className="text-muted-foreground col-span-full text-center py-10">Nenhuma categoria criada</p>}
+
+        {categories.length === 0 && (
+          <div className="col-span-full glass rounded-3xl p-8 text-center space-y-3">
+            <FolderOpen className="w-12 h-12 text-muted-foreground mx-auto" />
+            <p className="text-foreground font-bold">Nenhuma categoria criada</p>
+            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+              Crie categorias como Alimentação, Transporte, Lazer para organizar seus gastos e visualizar para onde seu dinheiro vai.
+            </p>
+          </div>
+        )}
       </div>
 
-      {showAdd && <AddCategoryModal onClose={() => setShowAdd(false)} />}
+      {(showAdd || editItem) && (
+        <AddCategoryModal
+          editData={editItem || undefined}
+          onClose={() => { setShowAdd(false); setEditItem(null); }}
+        />
+      )}
     </div>
   );
 };
