@@ -24,28 +24,25 @@ const InvoicesPage = () => {
       .forEach((t) => {
         const [year, month, day] = t.date.split('-').map(Number);
         const txDate = new Date(year, month - 1, day);
-        const totalInstallments = t.installments || 1;
 
-        for (let i = 0; i < totalInstallments; i++) {
-          const installmentDate = addMonths(txDate, i);
+        let invoiceMonth: Date;
+        if (txDate.getDate() >= closingDay) {
+          invoiceMonth = addMonths(txDate, 1);
+        } else {
+          invoiceMonth = txDate;
+        }
 
-          let invoiceMonth: Date;
-          if (installmentDate.getDate() >= closingDay) {
-            invoiceMonth = addMonths(installmentDate, 1);
-          } else {
-            invoiceMonth = installmentDate;
-          }
-
-          if (invoiceMonth.getMonth() === refMonth && invoiceMonth.getFullYear() === refYear) {
-            const cat = categories.find((c) => c.id === t.category_id);
-            items.push({
-              description: t.description,
-              amount: Number(t.amount) / totalInstallments,
-              date: t.date,
-              installmentLabel: totalInstallments > 1 ? `${i + 1}/${totalInstallments}` : undefined,
-              categoryIcon: cat?.icon,
-            });
-          }
+        if (invoiceMonth.getMonth() === refMonth && invoiceMonth.getFullYear() === refYear) {
+          const cat = categories.find((c) => c.id === t.category_id);
+          const totalInstallments = t.installments || 1;
+          const currentInstallment = t.current_installment || 1;
+          items.push({
+            description: t.description,
+            amount: Number(t.amount),
+            date: t.date,
+            installmentLabel: totalInstallments > 1 ? `${currentInstallment}/${totalInstallments}` : undefined,
+            categoryIcon: cat?.icon,
+          });
         }
       });
 
