@@ -8,7 +8,7 @@ import type { Tables } from '@/integrations/supabase/types';
 type Category = Tables<'categories'>;
 
 const CategoriesPage = () => {
-  const { categories, transactions, deleteCategory } = useFinance();
+  const { categories, transactions, recurringExpenses, deleteCategory } = useFinance();
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<Category | null>(null);
 
@@ -19,7 +19,9 @@ const CategoriesPage = () => {
   const monthExpenses = transactions.filter(
     (t) => t.type === 'EXPENSE' && isWithinInterval(parseISO(t.date), { start: monthStart, end: monthEnd })
   );
-  const totalExpense = monthExpenses.reduce((s, t) => s + Number(t.amount), 0);
+  const activeRecurring = recurringExpenses.filter((r) => r.active);
+  const recurringTotal = activeRecurring.reduce((s, r) => s + Number(r.amount), 0);
+  const totalExpense = monthExpenses.reduce((s, t) => s + Number(t.amount), 0) + recurringTotal;
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -34,7 +36,8 @@ const CategoriesPage = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in-delay-1">
         {categories.map((cat) => {
-          const spent = monthExpenses.filter((t) => t.category_id === cat.id).reduce((s, t) => s + Number(t.amount), 0);
+          const spent = monthExpenses.filter((t) => t.category_id === cat.id).reduce((s, t) => s + Number(t.amount), 0)
+            + activeRecurring.filter((r) => r.category_id === cat.id).reduce((s, r) => s + Number(r.amount), 0);
           const pct = totalExpense > 0 ? (spent / totalExpense) * 100 : 0;
           return (
             <div key={cat.id} className="glass rounded-3xl p-5 group">

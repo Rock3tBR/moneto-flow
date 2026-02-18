@@ -5,7 +5,7 @@ import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const InvoicesPage = () => {
-  const { transactions, creditCards, categories } = useFinance();
+  const { transactions, creditCards, categories, recurringExpenses } = useFinance();
   const [selectedCard, setSelectedCard] = useState<string>(creditCards[0]?.id || '');
   const [monthOffset, setMonthOffset] = useState(0);
 
@@ -17,7 +17,7 @@ const InvoicesPage = () => {
   const invoiceItems = useMemo(() => {
     if (!card) return [];
     const closingDay = card.closing_day;
-    const items: { description: string; amount: number; date: string; installmentLabel?: string; categoryIcon?: string }[] = [];
+    const items: { description: string; amount: number; date: string; installmentLabel?: string; categoryIcon?: string; isRecurring?: boolean }[] = [];
 
     transactions
       .filter((t) => t.card_id === card.id && t.type === 'EXPENSE')
@@ -27,7 +27,6 @@ const InvoicesPage = () => {
         const totalInstallments = t.installments || 1;
 
         for (let i = 0; i < totalInstallments; i++) {
-          // Determine which invoice month this installment falls into
           const installmentDate = addMonths(txDate, i);
 
           let invoiceMonth: Date;
@@ -50,8 +49,22 @@ const InvoicesPage = () => {
         }
       });
 
+    // Add active recurring expenses linked to this card
+    recurringExpenses
+      .filter((r) => r.active && r.card_id === card.id)
+      .forEach((r) => {
+        const cat = categories.find((c) => c.id === r.category_id);
+        items.push({
+          description: r.description,
+          amount: Number(r.amount),
+          date: '',
+          categoryIcon: cat?.icon,
+          isRecurring: true,
+        });
+      });
+
     return items;
-  }, [transactions, card, refMonth, refYear, categories]);
+  }, [transactions, recurringExpenses, card, refMonth, refYear, categories]);
 
   const total = invoiceItems.reduce((s, i) => s + i.amount, 0);
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -109,8 +122,14 @@ const InvoicesPage = () => {
                   <div>
                     <p className="text-foreground text-sm font-semibold">{item.description}</p>
                     <p className="text-muted-foreground text-xs">
-                      Compra em {format(parseISO(item.date), 'dd/MM/yyyy')}
-                      {item.installmentLabel && <span className="ml-2 text-primary">{item.installmentLabel}</span>}
+                      {item.isRecurring ? (
+                        <span className="text-primary">🔄 Gasto fixo</span>
+                      ) : (
+                        <>
+                          Compra em {format(parseISO(item.date), 'dd/MM/yyyy')}
+                          {item.installmentLabel && <span className="ml-2 text-primary">{item.installmentLabel}</span>}
+                        </>
+                      )}
                     </p>
                   </div>
                 </div>
