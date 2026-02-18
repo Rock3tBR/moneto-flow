@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
-import { startOfMonth, endOfMonth, parseISO, isWithinInterval } from 'date-fns';
-import { Trash2, Plus, Pencil, FolderOpen } from 'lucide-react';
+import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format } from 'date-fns';
+import { Trash2, Plus, Pencil, FolderOpen, Eye, X, CalendarClock } from 'lucide-react';
 import AddCategoryModal from '@/components/modals/AddCategoryModal';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -11,6 +11,7 @@ const CategoriesPage = () => {
   const { categories, transactions, recurringExpenses, deleteCategory } = useFinance();
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<Category | null>(null);
+  const [viewCategory, setViewCategory] = useState<Category | null>(null);
 
   const now = new Date();
   const monthStart = startOfMonth(now);
@@ -24,6 +25,30 @@ const CategoriesPage = () => {
   const totalExpense = monthExpenses.reduce((s, t) => s + Number(t.amount), 0) + recurringTotal;
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  // Build detail items for selected category
+  const categoryDetails = viewCategory ? [
+    ...monthExpenses
+      .filter((t) => t.category_id === viewCategory.id)
+      .map((t) => ({
+        description: t.description,
+        amount: Number(t.amount),
+        date: format(parseISO(t.date), 'dd/MM/yyyy'),
+        isFixed: false,
+        installmentLabel: t.installments && t.installments > 1
+          ? `${t.current_installment}/${t.installments}`
+          : undefined,
+      })),
+    ...activeRecurring
+      .filter((r) => r.category_id === viewCategory.id)
+      .map((r) => ({
+        description: r.description,
+        amount: Number(r.amount),
+        date: `Dia ${r.day_of_month}`,
+        isFixed: true,
+        installmentLabel: undefined,
+      })),
+  ] : [];
 
   return (
     <div className="p-4 lg:p-8 space-y-6">
@@ -52,6 +77,9 @@ const CategoriesPage = () => {
                   </div>
                 </div>
                 <div className="flex gap-1">
+                  <button onClick={() => setViewCategory(cat)} className="text-muted-foreground hover:text-foreground transition-all" title="Ver gastos">
+                    <Eye className="w-4 h-4" />
+                  </button>
                   <button onClick={() => setEditItem(cat)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all">
                     <Pencil className="w-4 h-4" />
                   </button>
@@ -78,6 +106,52 @@ const CategoriesPage = () => {
           </div>
         )}
       </div>
+
+      {/* Category detail modal */}
+      {viewCategory && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setViewCategory(null)}>
+          <div className="glass rounded-3xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ background: viewCategory.color + '22' }}>
+                  {viewCategory.icon}
+                </div>
+                <h2 className="text-foreground font-black text-lg">{viewCategory.name}</h2>
+              </div>
+              <button onClick={() => setViewCategory(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {categoryDetails.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-6">Nenhum gasto nesta categoria este mês.</p>
+            ) : (
+              <div className="space-y-2">
+                {categoryDetails.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      {item.isFixed && <CalendarClock className="w-4 h-4 text-primary shrink-0" />}
+                      <div>
+                        <p className="text-foreground text-sm font-semibold">{item.description}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {item.date}
+                          {item.isFixed && <span className="ml-2 text-primary font-medium">Gasto fixo</span>}
+                          {item.installmentLabel && <span className="ml-2 text-primary">{item.installmentLabel}</span>}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-expense font-bold text-sm">{fmt(item.amount)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between pt-3 border-t border-border mt-2">
+                  <span className="text-foreground font-bold text-sm">Total</span>
+                  <span className="text-expense font-black">{fmt(categoryDetails.reduce((s, i) => s + i.amount, 0))}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {(showAdd || editItem) && (
         <AddCategoryModal
