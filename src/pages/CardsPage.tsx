@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { Trash2, Plus, Pencil, CreditCard } from 'lucide-react';
 import AddCardModal from '@/components/modals/AddCardModal';
+import { parseISO, addMonths } from 'date-fns';
 import type { Tables } from '@/integrations/supabase/types';
 
 type CreditCardType = Tables<'credit_cards'>;
@@ -24,7 +25,18 @@ const CardsPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in-delay-1">
         {creditCards.map((card) => {
-          const used = transactions.filter((t) => t.card_id === card.id && t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0)
+          const now = new Date();
+          const refMonth = now.getMonth();
+          const refYear = now.getFullYear();
+          const closingDay = card.closing_day;
+          const used = transactions
+            .filter((t) => t.card_id === card.id && t.type === 'EXPENSE')
+            .filter((t) => {
+              const txDate = parseISO(t.date);
+              const invoiceMonth = txDate.getDate() >= closingDay ? addMonths(txDate, 1) : txDate;
+              return invoiceMonth.getMonth() === refMonth && invoiceMonth.getFullYear() === refYear;
+            })
+            .reduce((s, t) => s + Number(t.amount), 0)
             + recurringExpenses.filter((r) => r.active && r.card_id === card.id).reduce((s, r) => s + Number(r.amount), 0);
           const limit = Number(card.limit_amount);
           const pct = limit > 0 ? (used / limit) * 100 : 0;

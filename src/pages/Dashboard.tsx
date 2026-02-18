@@ -32,10 +32,12 @@ const Dashboard = () => {
   const monthIncome = monthTxs.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
   const monthExpense = monthTxs.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0) + recurringMonthTotal;
 
-  // Cumulative balance: ALL income - ALL expenses - ALL savings
-  const allIncome = transactions.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
-  const allExpense = transactions.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0);
-  const totalSavings = savingsTransactions.reduce(
+  // Cumulative balance up to the end of selected month
+  const txsUpToMonth = transactions.filter((t) => parseISO(t.date) <= monthEnd);
+  const allIncome = txsUpToMonth.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
+  const allExpense = txsUpToMonth.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0);
+  const savingsUpToMonth = savingsTransactions.filter((t) => parseISO(t.date) <= monthEnd);
+  const totalSavings = savingsUpToMonth.reduce(
     (s, t) => s + (t.type === 'DEPOSIT' ? Number(t.amount) : -Number(t.amount)), 0
   );
   const balance = allIncome - allExpense - totalSavings;
