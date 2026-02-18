@@ -7,7 +7,7 @@ import type { Tables } from '@/integrations/supabase/types';
 type CreditCardType = Tables<'credit_cards'>;
 
 const CardsPage = () => {
-  const { creditCards, transactions, deleteCreditCard } = useFinance();
+  const { creditCards, transactions, recurringExpenses, deleteCreditCard } = useFinance();
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<CreditCardType | null>(null);
 
@@ -24,7 +24,8 @@ const CardsPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in-delay-1">
         {creditCards.map((card) => {
-          const used = transactions.filter((t) => t.card_id === card.id && t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0);
+          const used = transactions.filter((t) => t.card_id === card.id && t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0)
+            + recurringExpenses.filter((r) => r.active && r.card_id === card.id).reduce((s, r) => s + Number(r.amount), 0);
           const limit = Number(card.limit_amount);
           const pct = limit > 0 ? (used / limit) * 100 : 0;
           return (
