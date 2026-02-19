@@ -32,15 +32,13 @@ const Dashboard = () => {
   const monthIncome = monthTxs.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
   const monthExpense = monthTxs.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0) + recurringMonthTotal;
 
-  // Cumulative balance up to the end of selected month
-  const txsUpToMonth = transactions.filter((t) => parseISO(t.date) <= monthEnd);
-  const allIncome = txsUpToMonth.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
-  const allExpense = txsUpToMonth.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0);
-  const savingsUpToMonth = savingsTransactions.filter((t) => parseISO(t.date) <= monthEnd);
-  const totalSavings = savingsUpToMonth.reduce(
+  // Balance = month income - month expenses (simple monthly balance)
+  const balance = monthIncome - monthExpense;
+
+  // Total savings for display
+  const totalSavings = savingsTransactions.reduce(
     (s, t) => s + (t.type === 'DEPOSIT' ? Number(t.amount) : -Number(t.amount)), 0
   );
-  const balance = allIncome - allExpense - totalSavings;
 
   // Card limit used — filtered by selected month using invoice logic
   const usedLimitByMonth = useMemo(() => {
