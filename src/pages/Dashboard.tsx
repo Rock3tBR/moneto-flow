@@ -32,8 +32,12 @@ const Dashboard = () => {
   const monthIncome = monthTxs.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
   const monthExpense = monthTxs.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0) + recurringMonthTotal;
 
-  // Balance = month income - month expenses (simple monthly balance)
-  const balance = monthIncome - monthExpense;
+  // Cumulative balance: all income - all expenses up to end of selected month (historical running balance)
+  const monthEndStr = format(monthEnd, 'yyyy-MM-dd');
+  const txsUpToMonth = transactions.filter((t) => t.date <= monthEndStr);
+  const cumulativeIncome = txsUpToMonth.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
+  const cumulativeExpense = txsUpToMonth.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0);
+  const balance = cumulativeIncome - cumulativeExpense;
 
   // Total savings for display
   const totalSavings = savingsTransactions.reduce(
@@ -48,14 +52,13 @@ const Dashboard = () => {
       transactions
         .filter((t) => t.card_id === card.id && t.type === 'EXPENSE')
         .forEach((t) => {
-          const txDate = parseISO(t.date);
-          let invoiceMonth: Date;
-          if (txDate.getDate() >= closingDay) {
-            invoiceMonth = addMonths(txDate, 1);
-          } else {
-            invoiceMonth = txDate;
-          }
-          if (invoiceMonth.getMonth() === refMonth && invoiceMonth.getFullYear() === refYear) {
+          const [y, m, d] = t.date.split('-').map(Number);
+          const txDate = new Date(y, m - 1, d);
+          // Bank logic: on or after closing day → next month's invoice
+          const invoiceDate = txDate.getDate() >= closingDay
+            ? new Date(txDate.getFullYear(), txDate.getMonth() + 1, 1)
+            : new Date(txDate.getFullYear(), txDate.getMonth(), 1);
+          if (invoiceDate.getMonth() === refMonth && invoiceDate.getFullYear() === refYear) {
             total += Number(t.amount);
           }
         });

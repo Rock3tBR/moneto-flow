@@ -25,14 +25,18 @@ const InvoicesPage = () => {
         const [year, month, day] = t.date.split('-').map(Number);
         const txDate = new Date(year, month - 1, day);
 
-        let invoiceMonth: Date;
+        // Bank logic: purchases on closing day OR AFTER go to next month's invoice
+        // e.g. closing=6: purchases Feb 6 → Mar 5 go to March invoice
+        let invoiceDate: Date;
         if (txDate.getDate() >= closingDay) {
-          invoiceMonth = addMonths(txDate, 1);
+          // Move to the 1st of the next month (invoice month)
+          invoiceDate = new Date(txDate.getFullYear(), txDate.getMonth() + 1, 1);
         } else {
-          invoiceMonth = txDate;
+          // Stays in the current month's invoice
+          invoiceDate = new Date(txDate.getFullYear(), txDate.getMonth(), 1);
         }
 
-        if (invoiceMonth.getMonth() === refMonth && invoiceMonth.getFullYear() === refYear) {
+        if (invoiceDate.getMonth() === refMonth && invoiceDate.getFullYear() === refYear) {
           const cat = categories.find((c) => c.id === t.category_id);
           const totalInstallments = t.installments || 1;
           const currentInstallment = t.current_installment || 1;

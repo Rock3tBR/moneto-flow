@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { Trash2, Plus, Pencil, CreditCard } from 'lucide-react';
 import AddCardModal from '@/components/modals/AddCardModal';
-import { parseISO, addMonths } from 'date-fns';
+
 import type { Tables } from '@/integrations/supabase/types';
 
 type CreditCardType = Tables<'credit_cards'>;
@@ -32,9 +32,13 @@ const CardsPage = () => {
           const used = transactions
             .filter((t) => t.card_id === card.id && t.type === 'EXPENSE')
             .filter((t) => {
-              const txDate = parseISO(t.date);
-              const invoiceMonth = txDate.getDate() >= closingDay ? addMonths(txDate, 1) : txDate;
-              return invoiceMonth.getMonth() === refMonth && invoiceMonth.getFullYear() === refYear;
+              const [y, m, d] = t.date.split('-').map(Number);
+              const txDate = new Date(y, m - 1, d);
+              // Bank logic: on or after closing day → next month's invoice
+              const invoiceDate = txDate.getDate() >= closingDay
+                ? new Date(txDate.getFullYear(), txDate.getMonth() + 1, 1)
+                : new Date(txDate.getFullYear(), txDate.getMonth(), 1);
+              return invoiceDate.getMonth() === refMonth && invoiceDate.getFullYear() === refYear;
             })
             .reduce((s, t) => s + Number(t.amount), 0)
             + recurringExpenses.filter((r) => r.active && r.card_id === card.id).reduce((s, r) => s + Number(r.amount), 0);
