@@ -14,15 +14,22 @@ const Dashboard = () => {
   const [monthOffset, setMonthOffset] = useState(0);
   const [dayRange, setDayRange] = useState(30);
 
-  const refDate = addMonths(new Date(), monthOffset);
+  const now = new Date();
+  const refDate = addMonths(now, monthOffset);
   const monthStart = startOfMonth(refDate);
   const monthEnd = endOfMonth(refDate);
   const refMonth = refDate.getMonth();
   const refYear = refDate.getFullYear();
 
+  // Is this the current real month?
+  const isCurrentMonth = refMonth === now.getMonth() && refYear === now.getFullYear();
+  // Effective cutoff: today for current month, end of month for past months
+  const effectiveEnd = isCurrentMonth ? now : monthEnd;
+  const effectiveEndStr = format(effectiveEnd, 'yyyy-MM-dd');
+
   const monthTxs = transactions.filter((t) => {
     const d = parseISO(t.date);
-    return isWithinInterval(d, { start: monthStart, end: monthEnd });
+    return isWithinInterval(d, { start: monthStart, end: effectiveEnd });
   });
 
   // Include active recurring expenses as virtual transactions for the month
@@ -32,11 +39,10 @@ const Dashboard = () => {
   const monthIncome = monthTxs.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
   const monthExpense = monthTxs.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0) + recurringMonthTotal;
 
-  // Cumulative balance: all income - all expenses up to end of selected month (historical running balance)
-  const monthEndStr = format(monthEnd, 'yyyy-MM-dd');
-  const txsUpToMonth = transactions.filter((t) => t.date <= monthEndStr);
-  const cumulativeIncome = txsUpToMonth.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
-  const cumulativeExpense = txsUpToMonth.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0);
+  // Cumulative balance: all income - all expenses up to effective end date
+  const txsUpToEnd = transactions.filter((t) => t.date <= effectiveEndStr);
+  const cumulativeIncome = txsUpToEnd.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
+  const cumulativeExpense = txsUpToEnd.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0);
   const balance = cumulativeIncome - cumulativeExpense;
 
   // Total savings for display
@@ -151,6 +157,11 @@ const Dashboard = () => {
             <span className="text-muted-foreground text-sm uppercase tracking-widest capitalize">
               {format(refDate, "MMMM 'de' yyyy", { locale: ptBR })}
             </span>
+            {isCurrentMonth && (
+              <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-[10px] font-bold uppercase tracking-wider animate-pulse">
+                ao vivo
+              </span>
+            )}
             <button onClick={() => setMonthOffset((o) => o + 1)} className="p-1 rounded-lg hover:bg-muted transition-colors">
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </button>
