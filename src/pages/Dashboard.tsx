@@ -40,9 +40,10 @@ const Dashboard = () => {
   const monthExpense = monthTxs.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0) + recurringMonthTotal;
 
   // Cumulative balance: all income - all expenses up to effective end date
+  // Card expenses are NOT subtracted from balance — only invoice payments (card_id = null) affect the balance
   const txsUpToEnd = transactions.filter((t) => t.date <= effectiveEndStr);
   const cumulativeIncome = txsUpToEnd.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
-  const cumulativeExpense = txsUpToEnd.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0);
+  const cumulativeExpense = txsUpToEnd.filter((t) => t.type === 'EXPENSE' && !t.card_id).reduce((s, t) => s + Number(t.amount), 0);
   const balance = cumulativeIncome - cumulativeExpense;
 
   // Total savings for display
