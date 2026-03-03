@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
-import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format } from 'date-fns';
-import { Trash2, Plus, Pencil, FolderOpen, Eye, X, CalendarClock } from 'lucide-react';
+import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format, addMonths } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Trash2, Plus, Pencil, FolderOpen, Eye, X, CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react';
 import AddCategoryModal from '@/components/modals/AddCategoryModal';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -12,10 +13,12 @@ const CategoriesPage = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<Category | null>(null);
   const [viewCategory, setViewCategory] = useState<Category | null>(null);
+  const [monthOffset, setMonthOffset] = useState(0);
 
   const now = new Date();
-  const monthStart = startOfMonth(now);
-  const monthEnd = endOfMonth(now);
+  const refDate = addMonths(now, monthOffset);
+  const monthStart = startOfMonth(refDate);
+  const monthEnd = endOfMonth(refDate);
 
   const monthExpenses = transactions.filter(
     (t) => t.type === 'EXPENSE' && isWithinInterval(parseISO(t.date), { start: monthStart, end: monthEnd })
@@ -56,6 +59,19 @@ const CategoriesPage = () => {
         <h1 className="text-2xl lg:text-3xl font-black text-foreground animate-in">Categorias</h1>
         <button onClick={() => setShowAdd(true)} className="gradient-primary px-5 py-2.5 rounded-2xl text-foreground font-semibold text-sm">
           <Plus className="w-4 h-4 inline mr-1" /> Nova
+        </button>
+      </div>
+
+      {/* Month nav */}
+      <div className="flex items-center justify-center gap-6 animate-in">
+        <button onClick={() => setMonthOffset((o) => o - 1)} className="p-2 rounded-xl bg-muted text-foreground hover:bg-accent transition-colors">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <span className="text-foreground font-bold text-lg capitalize">
+          {format(refDate, "MMMM yyyy", { locale: ptBR })}
+        </span>
+        <button onClick={() => setMonthOffset((o) => o + 1)} className="p-2 rounded-xl bg-muted text-foreground hover:bg-accent transition-colors">
+          <ChevronRight className="w-5 h-5" />
         </button>
       </div>
 

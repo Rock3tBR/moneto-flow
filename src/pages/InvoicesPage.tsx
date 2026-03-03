@@ -2,17 +2,43 @@ import React, { useState, useMemo } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { addMonths, format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+
+type InvoiceStatus = 'PAID' | 'OPEN' | 'OVERDUE';
 
 const InvoicesPage = () => {
   const { transactions, creditCards, categories, recurringExpenses } = useFinance();
   const [selectedCard, setSelectedCard] = useState<string>(creditCards[0]?.id || '');
   const [monthOffset, setMonthOffset] = useState(0);
+  const [statusFilter, setStatusFilter] = useState<'all' | InvoiceStatus>('all');
 
   const card = creditCards.find((c) => c.id === selectedCard);
   const refDate = addMonths(new Date(), monthOffset);
   const refMonth = refDate.getMonth();
   const refYear = refDate.getFullYear();
+
+  // Check if this invoice has been paid by looking for a payment transaction
+  const isInvoicePaid = useMemo(() => {
+    if (!card) return false;
+    return transactions.some((t) => {
+      if (t.type !== 'EXPENSE' || t.card_id !== null) return false;
+      const monthDate = new Date(refYear, refMonth, 1);
+      const expectedDesc = `Pgto Fatura ${card.name} - ${format(monthDate, "MMM/yyyy", { locale: ptBR })}`;
+      return t.description.toLowerCase() === expectedDesc.toLowerCase();
+    });
+  }, [transactions, card, refMonth, refYear]);
+
+  // Determine invoice status
+  const invoiceStatus: InvoiceStatus = useMemo(() => {
+    if (isInvoicePaid) return 'PAID';
+    if (!card) return 'OPEN';
+    const now = new Date();
+    // Due date for this invoice
+    const dueDate = new Date(refYear, refMonth, card.due_day);
+    if (now > dueDate) return 'OVERDUE';
+    return 'OPEN';
+  }, [isInvoicePaid, card, refMonth, refYear]);
 
   const invoiceItems = useMemo(() => {
     if (!card) return [];
@@ -25,14 +51,10 @@ const InvoicesPage = () => {
         const [year, month, day] = t.date.split('-').map(Number);
         const txDate = new Date(year, month - 1, day);
 
-        // Bank logic: purchases on closing day OR AFTER go to next month's invoice
-        // e.g. closing=6: purchases Feb 6 → Mar 5 go to March invoice
         let invoiceDate: Date;
         if (txDate.getDate() >= closingDay) {
-          // Move to the 1st of the next month (invoice month)
           invoiceDate = new Date(txDate.getFullYear(), txDate.getMonth() + 1, 1);
         } else {
-          // Stays in the current month's invoice
           invoiceDate = new Date(txDate.getFullYear(), txDate.getMonth(), 1);
         }
 
@@ -50,7 +72,6 @@ const InvoicesPage = () => {
         }
       });
 
-    // Add active recurring expenses linked to this card
     recurringExpenses
       .filter((r) => r.active && r.card_id === card.id)
       .forEach((r) => {
@@ -69,6 +90,18 @@ const InvoicesPage = () => {
 
   const total = invoiceItems.reduce((s, i) => s + i.amount, 0);
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const statusConfig = {
+    PAID: { label: 'Paga', icon: CheckCircle2, className: 'bg-green-500/20 text-green-400 border-green-500/30' },
+    OPEN: { label: 'Em aberto', icon: Clock, className: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+    OVERDUE: { label: 'Atrasada', icon: AlertTriangle, className: 'bg-red-500/20 text-red-400 border-red-500/30' },
+  };
+
+  const currentStatusConfig = statusConfig[invoiceStatus];
+  const StatusIcon = currentStatusConfig.icon;
+
+  // Filter visibility based on status filter
+  const showInvoice = statusFilter === 'all' || statusFilter === invoiceStatus;
 
   return (
     <div className="p-4 lg:p-8 space-y-6">
@@ -93,6 +126,26 @@ const InvoicesPage = () => {
             ))}
           </div>
 
+          {/* Status filter */}
+          <div className="flex flex-wrap gap-2 animate-in-delay-1">
+            {([
+              { key: 'all', label: 'Todas' },
+              { key: 'OVERDUE', label: '⚠️ Atrasadas' },
+              { key: 'OPEN', label: '🕐 Em aberto' },
+              { key: 'PAID', label: '✅ Pagas' },
+            ] as const).map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setStatusFilter(f.key)}
+                className={`px-4 py-2 rounded-2xl text-sm font-medium transition-all ${
+                  statusFilter === f.key ? 'gradient-primary text-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
           {/* Month nav */}
           <div className="flex items-center justify-center gap-6 animate-in-delay-2">
             <button onClick={() => setMonthOffset((o) => o - 1)} className="p-2 rounded-xl bg-muted text-foreground hover:bg-accent transition-colors">
@@ -106,38 +159,52 @@ const InvoicesPage = () => {
             </button>
           </div>
 
-          {/* Total */}
-          <div className="glass rounded-3xl p-5 text-center">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Total da Fatura</p>
-            <p className="text-3xl font-black text-foreground mt-1">{fmt(total)}</p>
-            {card && <p className="text-xs text-muted-foreground mt-1">Vence dia {card.due_day}</p>}
-          </div>
-
-          {/* Items */}
-          <div className="space-y-2">
-            {invoiceItems.length === 0 && <p className="text-muted-foreground text-center py-6">Nenhum item nesta fatura</p>}
-            {invoiceItems.map((item, i) => (
-              <div key={i} className="glass rounded-2xl p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">{item.categoryIcon || '💳'}</span>
-                  <div>
-                    <p className="text-foreground text-sm font-semibold">{item.description}</p>
-                    <p className="text-muted-foreground text-xs">
-                      {item.isRecurring ? (
-                        <span className="text-primary">🔄 Gasto fixo</span>
-                      ) : (
-                        <>
-                          Compra em {format(parseISO(item.date), 'dd/MM/yyyy')}
-                          {item.installmentLabel && <span className="ml-2 text-primary">{item.installmentLabel}</span>}
-                        </>
-                      )}
-                    </p>
-                  </div>
+          {showInvoice ? (
+            <>
+              {/* Total + Status */}
+              <div className="glass rounded-3xl p-5 text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Badge className={currentStatusConfig.className}>
+                    <StatusIcon className="w-3 h-3 mr-1" />
+                    {currentStatusConfig.label}
+                  </Badge>
                 </div>
-                <span className="text-foreground font-bold">{fmt(item.amount)}</span>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Total da Fatura</p>
+                <p className={`text-3xl font-black mt-1 ${
+                  invoiceStatus === 'PAID' ? 'text-green-400' : invoiceStatus === 'OVERDUE' ? 'text-red-400' : 'text-foreground'
+                }`}>{fmt(total)}</p>
+                {card && <p className="text-xs text-muted-foreground mt-1">Vence dia {card.due_day}</p>}
               </div>
-            ))}
-          </div>
+
+              {/* Items */}
+              <div className="space-y-2">
+                {invoiceItems.length === 0 && <p className="text-muted-foreground text-center py-6">Nenhum item nesta fatura</p>}
+                {invoiceItems.map((item, i) => (
+                  <div key={i} className="glass rounded-2xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">{item.categoryIcon || '💳'}</span>
+                      <div>
+                        <p className="text-foreground text-sm font-semibold">{item.description}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {item.isRecurring ? (
+                            <span className="text-primary">🔄 Gasto fixo</span>
+                          ) : (
+                            <>
+                              Compra em {format(parseISO(item.date), 'dd/MM/yyyy')}
+                              {item.installmentLabel && <span className="ml-2 text-primary">{item.installmentLabel}</span>}
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-foreground font-bold">{fmt(item.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="text-muted-foreground text-center py-10">Nenhuma fatura com este status neste mês</p>
+          )}
         </>
       )}
     </div>
