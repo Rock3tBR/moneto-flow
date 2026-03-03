@@ -20,6 +20,7 @@ interface OpenInvoice {
   total: number;
   label: string;
   key: string;
+  status: 'OPEN' | 'OVERDUE';
 }
 
 const AddTransactionModal = ({ onClose, editData }: Props) => {
@@ -48,15 +49,24 @@ const AddTransactionModal = ({ onClose, editData }: Props) => {
   });
   const [invoiceManualCardId, setInvoiceManualCardId] = useState('');
 
-  // Calculate open invoices across all cards
+  // Helper: check if invoice is already paid
+  const isInvoicePaid = (cardName: string, month: number, year: number) => {
+    const monthDate = new Date(year, month, 1);
+    const expectedDesc = `Pgto Fatura ${cardName} - ${format(monthDate, "MMM/yyyy", { locale: ptBR })}`;
+    return transactions.some((t) =>
+      t.type === 'EXPENSE' && !t.card_id && t.description.toLowerCase() === expectedDesc.toLowerCase()
+    );
+  };
+
+  // Calculate open invoices (only OPEN and OVERDUE — exclude PAID)
   const openInvoices = useMemo(() => {
     const invoices: OpenInvoice[] = [];
+    const now = new Date();
 
     creditCards.forEach((card) => {
       const closingDay = card.closing_day;
       const invoiceMap = new Map<string, number>();
 
-      // Sum card transactions per invoice month
       transactions
         .filter((t) => t.card_id === card.id && t.type === 'EXPENSE')
         .forEach((t) => {
@@ -77,11 +87,8 @@ const AddTransactionModal = ({ onClose, editData }: Props) => {
           invoiceMap.set(key, (invoiceMap.get(key) || 0) + Number(t.amount));
         });
 
-      // Add recurring expenses to each invoice month that has transactions
       const activeRecurring = recurringExpenses.filter((r) => r.active && r.card_id === card.id);
       
-      // Also ensure current month appears even if no transactions
-      const now = new Date();
       const currentKey = `${now.getFullYear()}-${now.getMonth()}`;
       if (!invoiceMap.has(currentKey) && activeRecurring.length > 0) {
         invoiceMap.set(currentKey, 0);
@@ -92,23 +99,29 @@ const AddTransactionModal = ({ onClose, editData }: Props) => {
         const recurringTotal = activeRecurring.reduce((s, r) => s + Number(r.amount), 0);
         const total = txTotal + recurringTotal;
 
-        if (total > 0) {
+        if (total > 0 && !isInvoicePaid(card.name, month, year)) {
           const monthDate = new Date(year, month, 1);
+          const dueDate = new Date(year, month, card.due_day);
+          const status: 'OPEN' | 'OVERDUE' = now > dueDate ? 'OVERDUE' : 'OPEN';
+          const statusLabel = status === 'OVERDUE' ? '⚠️ ATRASADA' : '🕐 Em aberto';
+
           invoices.push({
             cardId: card.id,
             cardName: card.name,
             month,
             year,
             total,
-            label: `${card.name} - ${format(monthDate, "MMM/yyyy", { locale: ptBR })} (${total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})`,
+            label: `${card.name} - ${format(monthDate, "MMM/yyyy", { locale: ptBR })} (${total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}) ${statusLabel}`,
             key: `${card.id}-${key}`,
+            status,
           });
         }
       });
     });
 
-    // Sort by date descending (most recent first)
+    // Sort: overdue first, then by date desc
     invoices.sort((a, b) => {
+      if (a.status !== b.status) return a.status === 'OVERDUE' ? -1 : 1;
       if (a.year !== b.year) return b.year - a.year;
       return b.month - a.month;
     });
@@ -122,7 +135,6 @@ const AddTransactionModal = ({ onClose, editData }: Props) => {
 
     if (mode === 'invoice') {
       if (selectedInvoice === 'all') {
-        // Pay all open invoices
         for (const inv of openInvoices) {
           const monthDate = new Date(inv.year, inv.month, 1);
           await addTransaction({
@@ -137,7 +149,6 @@ const AddTransactionModal = ({ onClose, editData }: Props) => {
           });
         }
       } else if (selectedInvoice === 'manual') {
-        // Manual invoice payment
         if (!invoiceManualAmount || !invoiceManualDate || !invoiceManualCardId) {
           setSubmitting(false);
           return;
@@ -156,7 +167,6 @@ const AddTransactionModal = ({ onClose, editData }: Props) => {
           current_installment: 1,
         });
       } else {
-        // Pay specific invoice
         const inv = openInvoices.find((i) => i.key === selectedInvoice);
         if (inv) {
           const monthDate = new Date(inv.year, inv.month, 1);
@@ -220,7 +230,6 @@ const AddTransactionModal = ({ onClose, editData }: Props) => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          {/* Mode selector - only show when adding, not editing */}
           {!isEdit && (
             <div className="flex gap-2">
               <button type="button" onClick={() => { setMode('normal'); setType('EXPENSE'); }}
@@ -237,7 +246,6 @@ const AddTransactionModal = ({ onClose, editData }: Props) => {
           )}
 
           {mode === 'invoice' ? (
-            // Invoice payment mode
             <>
               {hasOpenInvoices ? (
                 <>
@@ -263,6 +271,13 @@ const AddTransactionModal = ({ onClose, editData }: Props) => {
                         const monthDate = new Date(inv.year, inv.month, 1);
                         return (
                           <>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                inv.status === 'OVERDUE' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'
+                              }`}>
+                                {inv.status === 'OVERDUE' ? '⚠️ Atrasada' : '🕐 Em aberto'}
+                              </span>
+                            </div>
                             <p className="text-xs text-muted-foreground">Cartão</p>
                             <p className="text-foreground font-semibold text-sm">{inv.cardName}</p>
                             <p className="text-xs text-muted-foreground mt-2">Referente a</p>
@@ -282,7 +297,14 @@ const AddTransactionModal = ({ onClose, editData }: Props) => {
                         const monthDate = new Date(inv.year, inv.month, 1);
                         return (
                           <div key={inv.key} className="flex justify-between items-center">
-                            <span className="text-foreground text-sm">{inv.cardName} - <span className="capitalize">{format(monthDate, "MMM/yy", { locale: ptBR })}</span></span>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                                inv.status === 'OVERDUE' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'
+                              }`}>
+                                {inv.status === 'OVERDUE' ? '⚠️' : '🕐'}
+                              </span>
+                              <span className="text-foreground text-sm">{inv.cardName} - <span className="capitalize">{format(monthDate, "MMM/yy", { locale: ptBR })}</span></span>
+                            </div>
                             <span className="text-expense font-bold text-sm">{inv.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                           </div>
                         );
@@ -310,7 +332,6 @@ const AddTransactionModal = ({ onClose, editData }: Props) => {
                   )}
                 </>
               ) : (
-                // No open invoices - manual entry only
                 <>
                   <p className="text-muted-foreground text-sm text-center py-2">Nenhuma fatura em aberto encontrada. Insira manualmente:</p>
                   <InvoiceManualFields
@@ -329,7 +350,6 @@ const AddTransactionModal = ({ onClose, editData }: Props) => {
               )}
             </>
           ) : (
-            // Normal transaction mode
             <>
               <div className="flex gap-2">
                 {(['INCOME', 'EXPENSE'] as const).map((t) => (

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Trash2, Pencil } from 'lucide-react';
+import { Trash2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import AddTransactionModal from '@/components/modals/AddTransactionModal';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -14,10 +14,20 @@ const TransactionsPage = () => {
   const [catFilter, setCatFilter] = useState<string>('all');
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<Transaction | null>(null);
+  const [monthOffset, setMonthOffset] = useState(0);
+
+  const now = new Date();
+  const refDate = addMonths(now, monthOffset);
+  const monthStart = startOfMonth(refDate);
+  const monthEnd = endOfMonth(refDate);
 
   const fixedDescriptions = new Set(recurringExpenses.map((r) => r.description.toLowerCase()));
 
   const filtered = transactions.filter((t) => {
+    // Month filter
+    const d = parseISO(t.date);
+    if (!isWithinInterval(d, { start: monthStart, end: monthEnd })) return false;
+    
     if (filter === 'FIXED') return t.type === 'EXPENSE' && fixedDescriptions.has(t.description.toLowerCase());
     if (filter !== 'all' && t.type !== filter) return false;
     if (catFilter !== 'all' && t.category_id !== catFilter) return false;
@@ -33,6 +43,19 @@ const TransactionsPage = () => {
         <h1 className="text-2xl lg:text-3xl font-black text-foreground animate-in">Extrato</h1>
         <button onClick={() => setShowAdd(true)} className="gradient-primary px-5 py-2.5 rounded-2xl text-foreground font-semibold text-sm">
           + Transação
+        </button>
+      </div>
+
+      {/* Month nav */}
+      <div className="flex items-center justify-center gap-6 animate-in">
+        <button onClick={() => setMonthOffset((o) => o - 1)} className="p-2 rounded-xl bg-muted text-foreground hover:bg-accent transition-colors">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <span className="text-foreground font-bold text-lg capitalize">
+          {format(refDate, "MMMM yyyy", { locale: ptBR })}
+        </span>
+        <button onClick={() => setMonthOffset((o) => o + 1)} className="p-2 rounded-xl bg-muted text-foreground hover:bg-accent transition-colors">
+          <ChevronRight className="w-5 h-5" />
         </button>
       </div>
 
