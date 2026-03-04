@@ -5,6 +5,7 @@ import { ptBR } from 'date-fns/locale';
 import { TrendingUp, TrendingDown, Wallet, PiggyBank, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import AddTransactionModal from '@/components/modals/AddTransactionModal';
+import { calculateTotalUsedLimit } from '@/lib/cardLimitUtils';
 
 const COLORS = ['hsl(234, 89%, 74%)', 'hsl(160, 84%, 39%)', 'hsl(347, 77%, 50%)', 'hsl(38, 92%, 50%)', 'hsl(280, 65%, 60%)', 'hsl(200, 70%, 55%)'];
 
@@ -21,9 +22,7 @@ const Dashboard = () => {
   const refMonth = refDate.getMonth();
   const refYear = refDate.getFullYear();
 
-  // Is this the current real month?
   const isCurrentMonth = refMonth === now.getMonth() && refYear === now.getFullYear();
-  // Effective cutoff: today for current month, end of month for past months
   const effectiveEnd = isCurrentMonth ? now : monthEnd;
   const effectiveEndStr = format(effectiveEnd, 'yyyy-MM-dd');
 
@@ -32,52 +31,28 @@ const Dashboard = () => {
     return isWithinInterval(d, { start: monthStart, end: effectiveEnd });
   });
 
-  // Include active recurring expenses as virtual transactions for the month
   const activeRecurring = recurringExpenses.filter((r) => r.active);
   const recurringMonthTotal = activeRecurring.reduce((s, r) => s + Number(r.amount), 0);
 
   const monthIncome = monthTxs.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
   const monthExpense = monthTxs.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0) + recurringMonthTotal;
 
-  // Cumulative balance: all income - all expenses up to effective end date
-  // Card expenses are NOT subtracted from balance — only invoice payments (card_id = null) affect the balance
   const txsUpToEnd = transactions.filter((t) => t.date <= effectiveEndStr);
   const cumulativeIncome = txsUpToEnd.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
   const cumulativeExpense = txsUpToEnd.filter((t) => t.type === 'EXPENSE' && !t.card_id).reduce((s, t) => s + Number(t.amount), 0);
   const balance = cumulativeIncome - cumulativeExpense;
 
-  // Total savings for display
   const totalSavings = savingsTransactions.reduce(
     (s, t) => s + (t.type === 'DEPOSIT' ? Number(t.amount) : -Number(t.amount)), 0
   );
 
-  // Card limit used — filtered by selected month using invoice logic
+  // Card limit — new logic using shared utility
   const usedLimitByMonth = useMemo(() => {
-    let total = 0;
-    creditCards.forEach((card) => {
-      const closingDay = card.closing_day;
-      transactions
-        .filter((t) => t.card_id === card.id && t.type === 'EXPENSE')
-        .forEach((t) => {
-          const [y, m, d] = t.date.split('-').map(Number);
-          const txDate = new Date(y, m - 1, d);
-          // Bank logic: on or after closing day → next month's invoice
-          const invoiceDate = txDate.getDate() >= closingDay
-            ? new Date(txDate.getFullYear(), txDate.getMonth() + 1, 1)
-            : new Date(txDate.getFullYear(), txDate.getMonth(), 1);
-          if (invoiceDate.getMonth() === refMonth && invoiceDate.getFullYear() === refYear) {
-            total += Number(t.amount);
-          }
-        });
-    });
-    // Add recurring expenses with card_id
-    activeRecurring.forEach((r) => {
-      if (r.card_id) total += Number(r.amount);
-    });
-    return total;
-  }, [transactions, creditCards, activeRecurring, refMonth, refYear]);
+    return calculateTotalUsedLimit(creditCards, transactions, recurringExpenses, refMonth, refYear);
+  }, [transactions, creditCards, recurringExpenses, refMonth, refYear]);
 
   const totalLimit = creditCards.reduce((s, c) => s + Number(c.limit_amount), 0);
+  const limitPct = totalLimit > 0 ? (usedLimitByMonth / totalLimit) * 100 : 0;
 
   // Area chart
   const areaData = useMemo(() => {
@@ -118,7 +93,7 @@ const Dashboard = () => {
     return { name: card.name, value: total };
   }).filter((d) => d.value > 0);
 
-  // Income chart — month incomes sorted by amount desc
+  // Income chart
   const incomeData = useMemo(() => {
     return monthTxs
       .filter((t) => t.type === 'INCOME')
@@ -198,10 +173,13 @@ const Dashboard = () => {
             <span className="text-foreground font-bold">{fmt(totalLimit - usedLimitByMonth)} disponível</span>
           </div>
           <div className="w-full bg-muted rounded-full h-3">
-            <div className="h-3 rounded-full gradient-warning transition-all" style={{ width: `${Math.min((usedLimitByMonth / totalLimit) * 100, 100)}%` }} />
+            <div
+              className={`h-3 rounded-full transition-all ${limitPct >= 90 ? 'bg-red-500' : limitPct >= 70 ? 'bg-yellow-500' : 'gradient-warning'}`}
+              style={{ width: `${Math.min(limitPct, 100)}%` }}
+            />
           </div>
           <div className="flex justify-between text-xs text-muted-foreground mt-2">
-            <span>Usado: {fmt(usedLimitByMonth)}</span>
+            <span>Usado: {fmt(usedLimitByMonth)} ({Math.min(limitPct, 100).toFixed(1)}%)</span>
             <span>Limite: {fmt(totalLimit)}</span>
           </div>
         </div>
@@ -269,7 +247,6 @@ const Dashboard = () => {
 
       {/* Charts Row 2: Receitas + Por cartão */}
       <div className="grid lg:grid-cols-2 gap-4">
-        {/* Receitas */}
         <div className="glass rounded-3xl p-5">
           <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-4">Receitas do Mês</h3>
           {incomeData.length > 0 ? (
@@ -286,7 +263,6 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Gastos por cartão */}
         <div className="glass rounded-3xl p-5">
           <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-4">Gastos por Cartão</h3>
           {cardData.length > 0 ? (
