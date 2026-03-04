@@ -22,6 +22,7 @@ type RecurringExpense = {
   active: boolean;
   card_id: string | null;
   amount: number;
+  created_at: string | null;
 };
 
 function getInvoiceAbsMonth(txDate: Date, closingDay: number): number {
