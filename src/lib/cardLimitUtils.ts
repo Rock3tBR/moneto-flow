@@ -66,6 +66,12 @@ export function calculateCardUsedLimit(
 
   const recurringTotal = recurringExpenses
     .filter((r) => r.active && r.card_id === card.id)
+    .filter((r) => {
+      if (!r.created_at) return true;
+      const createdDate = new Date(r.created_at);
+      const createdAbsMonth = createdDate.getFullYear() * 12 + createdDate.getMonth();
+      return refAbsMonth >= createdAbsMonth;
+    })
     .reduce((s, r) => s + Number(r.amount), 0);
 
   return cardUsed + recurringTotal;
