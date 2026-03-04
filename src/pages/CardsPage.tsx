@@ -1,7 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
-import { Trash2, Plus, Pencil, CreditCard } from 'lucide-react';
+import { Trash2, Plus, Pencil, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
+import { addMonths, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import AddCardModal from '@/components/modals/AddCardModal';
+import { calculateCardUsedLimit } from '@/lib/cardLimitUtils';
 
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -11,13 +14,38 @@ const CardsPage = () => {
   const { creditCards, transactions, recurringExpenses, deleteCreditCard } = useFinance();
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<CreditCardType | null>(null);
+  const [monthOffset, setMonthOffset] = useState(0);
+
+  const now = new Date();
+  const refDate = addMonths(now, monthOffset);
+  const refMonth = refDate.getMonth();
+  const refYear = refDate.getFullYear();
+  const isCurrentMonth = refMonth === now.getMonth() && refYear === now.getFullYear();
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   return (
     <div className="p-4 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl lg:text-3xl font-black text-foreground animate-in">Cartões</h1>
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-black text-foreground animate-in">Cartões</h1>
+          <div className="flex items-center gap-3 mt-1 animate-in-delay-1">
+            <button onClick={() => setMonthOffset((o) => o - 1)} className="p-1 rounded-lg hover:bg-muted transition-colors">
+              <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+            </button>
+            <span className="text-muted-foreground text-sm uppercase tracking-widest capitalize">
+              {format(refDate, "MMMM 'de' yyyy", { locale: ptBR })}
+            </span>
+            {isCurrentMonth && (
+              <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-[10px] font-bold uppercase tracking-wider animate-pulse">
+                ao vivo
+              </span>
+            )}
+            <button onClick={() => setMonthOffset((o) => o + 1)} className="p-1 rounded-lg hover:bg-muted transition-colors">
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
+        </div>
         <button onClick={() => setShowAdd(true)} className="gradient-primary px-5 py-2.5 rounded-2xl text-foreground font-semibold text-sm">
           <Plus className="w-4 h-4 inline mr-1" /> Novo
         </button>
@@ -25,23 +53,7 @@ const CardsPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in-delay-1">
         {creditCards.map((card) => {
-          const now = new Date();
-          const refMonth = now.getMonth();
-          const refYear = now.getFullYear();
-          const closingDay = card.closing_day;
-          const used = transactions
-            .filter((t) => t.card_id === card.id && t.type === 'EXPENSE')
-            .filter((t) => {
-              const [y, m, d] = t.date.split('-').map(Number);
-              const txDate = new Date(y, m - 1, d);
-              // Bank logic: on or after closing day → next month's invoice
-              const invoiceDate = txDate.getDate() >= closingDay
-                ? new Date(txDate.getFullYear(), txDate.getMonth() + 1, 1)
-                : new Date(txDate.getFullYear(), txDate.getMonth(), 1);
-              return invoiceDate.getMonth() === refMonth && invoiceDate.getFullYear() === refYear;
-            })
-            .reduce((s, t) => s + Number(t.amount), 0)
-            + recurringExpenses.filter((r) => r.active && r.card_id === card.id).reduce((s, r) => s + Number(r.amount), 0);
+          const used = calculateCardUsedLimit(card, transactions, recurringExpenses, refMonth, refYear);
           const limit = Number(card.limit_amount);
           const pct = limit > 0 ? (used / limit) * 100 : 0;
           return (
@@ -66,11 +78,14 @@ const CardsPage = () => {
 
               <div className="relative z-10 space-y-3">
                 <div className="flex justify-between text-sm text-foreground/80">
-                  <span>Utilizado: {fmt(used)}</span>
+                  <span>Utilizado: {fmt(used)} ({Math.min(pct, 100).toFixed(1)}%)</span>
                   <span>Limite: {fmt(limit)}</span>
                 </div>
                 <div className="w-full bg-foreground/20 rounded-full h-2.5">
-                  <div className="h-2.5 rounded-full transition-all bg-foreground/70" style={{ width: `${Math.min(pct, 100)}%` }} />
+                  <div
+                    className={`h-2.5 rounded-full transition-all ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-foreground/70'}`}
+                    style={{ width: `${Math.min(pct, 100)}%` }}
+                  />
                 </div>
                 <div className="flex justify-between text-xs text-foreground/60">
                   <span>Fecha dia {card.closing_day}</span>
