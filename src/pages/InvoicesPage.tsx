@@ -2,16 +2,18 @@ import React, { useState, useMemo } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { addMonths, format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertTriangle, Clock, CheckCircle2, Banknote } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 type InvoiceStatus = 'PAID' | 'OPEN' | 'OVERDUE';
 
 const InvoicesPage = () => {
-  const { transactions, creditCards, categories, recurringExpenses } = useFinance();
+  const { transactions, creditCards, categories, recurringExpenses, addTransaction } = useFinance();
   const [selectedCard, setSelectedCard] = useState<string>(creditCards[0]?.id || '');
   const [monthOffset, setMonthOffset] = useState(0);
   const [statusFilter, setStatusFilter] = useState<'all' | InvoiceStatus>('all');
+  const [paying, setPaying] = useState(false);
 
   const card = creditCards.find((c) => c.id === selectedCard);
   const refDate = addMonths(new Date(), monthOffset);
@@ -34,7 +36,6 @@ const InvoicesPage = () => {
     if (isInvoicePaid) return 'PAID';
     if (!card) return 'OPEN';
     const now = new Date();
-    // Due date for this invoice
     const dueDate = new Date(refYear, refMonth, card.due_day);
     if (now > dueDate) return 'OVERDUE';
     return 'OPEN';
@@ -72,8 +73,16 @@ const InvoicesPage = () => {
         }
       });
 
+    // Only show recurring expenses from the month they were created onwards
+    const refAbsMonth = refYear * 12 + refMonth;
     recurringExpenses
       .filter((r) => r.active && r.card_id === card.id)
+      .filter((r) => {
+        if (!r.created_at) return true;
+        const createdDate = new Date(r.created_at);
+        const createdAbsMonth = createdDate.getFullYear() * 12 + createdDate.getMonth();
+        return refAbsMonth >= createdAbsMonth;
+      })
       .forEach((r) => {
         const cat = categories.find((c) => c.id === r.category_id);
         items.push({
@@ -91,6 +100,29 @@ const InvoicesPage = () => {
   const total = invoiceItems.reduce((s, i) => s + i.amount, 0);
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+  const handlePayInvoice = async () => {
+    if (!card || total <= 0) return;
+    setPaying(true);
+    try {
+      const monthDate = new Date(refYear, refMonth, 1);
+      const description = `Pgto Fatura ${card.name} - ${format(monthDate, "MMM/yyyy", { locale: ptBR })}`;
+      const today = new Date().toISOString().slice(0, 10);
+      await addTransaction({
+        description,
+        amount: total,
+        type: 'EXPENSE',
+        date: today,
+        card_id: null,
+        category_id: null,
+      });
+      toast.success('Fatura marcada como paga!');
+    } catch {
+      toast.error('Erro ao pagar fatura');
+    } finally {
+      setPaying(false);
+    }
+  };
+
   const statusConfig = {
     PAID: { label: 'Paga', icon: CheckCircle2, className: 'bg-green-500/20 text-green-400 border-green-500/30' },
     OPEN: { label: 'Em aberto', icon: Clock, className: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
@@ -100,7 +132,6 @@ const InvoicesPage = () => {
   const currentStatusConfig = statusConfig[invoiceStatus];
   const StatusIcon = currentStatusConfig.icon;
 
-  // Filter visibility based on status filter
   const showInvoice = statusFilter === 'all' || statusFilter === invoiceStatus;
 
   return (
@@ -174,6 +205,18 @@ const InvoicesPage = () => {
                   invoiceStatus === 'PAID' ? 'text-green-400' : invoiceStatus === 'OVERDUE' ? 'text-red-400' : 'text-foreground'
                 }`}>{fmt(total)}</p>
                 {card && <p className="text-xs text-muted-foreground mt-1">Vence dia {card.due_day}</p>}
+
+                {/* Pay invoice button */}
+                {invoiceStatus !== 'PAID' && total > 0 && (
+                  <button
+                    onClick={handlePayInvoice}
+                    disabled={paying}
+                    className="mt-4 inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30 font-semibold text-sm transition-all disabled:opacity-50"
+                  >
+                    <Banknote className="w-4 h-4" />
+                    {paying ? 'Pagando...' : 'Marcar como Paga'}
+                  </button>
+                )}
               </div>
 
               {/* Items */}
