@@ -58,7 +58,7 @@ export function calculateCardUsedLimit(
       const lastInvoiceAbs = firstInvoiceAbs + totalInstallments - 1;
 
       // Purchase still blocks limit if last installment is in current or future month
-      if (lastInvoiceAbs >= refAbsMonth) {
+      if (lastInvoiceAbs > refAbsMonth) {
         return sum + Number(t.amount) * totalInstallments;
       }
       return sum;
