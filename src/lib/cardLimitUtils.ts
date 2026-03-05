@@ -28,11 +28,12 @@ type RecurringExpense = {
 function getInvoiceAbsMonth(txDate: Date, closingDay: number): number {
   const year = txDate.getFullYear();
   const month = txDate.getMonth();
-  // On or after closing day → next month's invoice
+  // Before closing day → belongs to previous month's invoice
+  // On or after closing day → belongs to current month's invoice
   if (txDate.getDate() >= closingDay) {
-    return (month === 11 ? year + 1 : year) * 12 + ((month + 1) % 12);
+    return year * 12 + month;
   }
-  return year * 12 + month;
+  return (month === 0 ? year - 1 : year) * 12 + ((month - 1 + 12) % 12);
 }
 
 export function calculateCardUsedLimit(
