@@ -54,9 +54,9 @@ const InvoicesPage = () => {
 
         let invoiceDate: Date;
         if (txDate.getDate() >= closingDay) {
-          invoiceDate = new Date(txDate.getFullYear(), txDate.getMonth() + 1, 1);
-        } else {
           invoiceDate = new Date(txDate.getFullYear(), txDate.getMonth(), 1);
+        } else {
+          invoiceDate = new Date(txDate.getFullYear(), txDate.getMonth() - 1, 1);
         }
 
         if (invoiceDate.getMonth() === refMonth && invoiceDate.getFullYear() === refYear) {
