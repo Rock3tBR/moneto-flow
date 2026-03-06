@@ -39,7 +39,9 @@ const App = () => (
             <Route path="/" element={
               <ProtectedRoute>
                 <FinanceProvider>
-                  <AppLayout />
+                  <PlanProvider>
+                    <AppLayout />
+                  </PlanProvider>
                 </FinanceProvider>
               </ProtectedRoute>
             }>
