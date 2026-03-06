@@ -91,7 +91,7 @@ const AppLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 pb-24 lg:pb-6">
+      <main className="flex-1 lg:ml-64 pb-28 lg:pb-6">
         <Outlet />
       </main>
 
