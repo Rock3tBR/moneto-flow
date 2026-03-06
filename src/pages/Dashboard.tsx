@@ -247,9 +247,9 @@ const Dashboard = () => {
       </div>
 
       {/* Charts Row 2: Receitas + Por cartão */}
-      <div className="grid lg:grid-cols-2 gap-4">
-        <div className="glass rounded-3xl p-5">
-          <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-4">Receitas do Mês</h3>
+      <div className="grid lg:grid-cols-2 gap-3 lg:gap-4">
+        <div className="glass rounded-2xl lg:rounded-3xl p-4 lg:p-5">
+          <h3 className="text-[10px] lg:text-sm uppercase tracking-widest text-muted-foreground mb-3 lg:mb-4">Receitas do Mês</h3>
           {incomeData.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={incomeData} layout="vertical">
