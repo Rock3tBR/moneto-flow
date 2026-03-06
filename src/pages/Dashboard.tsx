@@ -283,9 +283,9 @@ const Dashboard = () => {
 
       {/* Pé de Meia */}
       {savingsPieData.length > 0 && (
-        <div className="glass rounded-3xl p-5">
-          <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-4">Pé de Meia</h3>
-          <div className="grid lg:grid-cols-2 gap-4">
+        <div className="glass rounded-2xl lg:rounded-3xl p-4 lg:p-5">
+          <h3 className="text-[10px] lg:text-sm uppercase tracking-widest text-muted-foreground mb-3 lg:mb-4">Pé de Meia</h3>
+          <div className="grid lg:grid-cols-2 gap-3 lg:gap-4">
             <ResponsiveContainer width="100%" height={160}>
               <PieChart>
                 <Pie data={savingsPieData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} dataKey="value" stroke="none">
