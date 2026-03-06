@@ -264,8 +264,8 @@ const Dashboard = () => {
           )}
         </div>
 
-        <div className="glass rounded-3xl p-5">
-          <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-4">Gastos por Cartão</h3>
+        <div className="glass rounded-2xl lg:rounded-3xl p-4 lg:p-5">
+          <h3 className="text-[10px] lg:text-sm uppercase tracking-widest text-muted-foreground mb-3 lg:mb-4">Gastos por Cartão</h3>
           {cardData.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={cardData} layout="vertical">
