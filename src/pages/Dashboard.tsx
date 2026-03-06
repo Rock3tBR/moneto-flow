@@ -168,9 +168,9 @@ const Dashboard = () => {
 
       {/* Card limit */}
       {creditCards.length > 0 && (
-        <div className="glass rounded-3xl p-5 animate-in-delay-2">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Limite de Cartões</h3>
+        <div className="glass rounded-2xl lg:rounded-3xl p-4 lg:p-5 animate-in-delay-2">
+          <div className="flex items-center justify-between mb-2 lg:mb-3">
+            <h3 className="text-[10px] lg:text-sm uppercase tracking-widest text-muted-foreground">Limite de Cartões</h3>
             <span className="text-foreground font-bold">{fmt(totalLimit - usedLimitByMonth)} disponível</span>
           </div>
           <div className="w-full bg-muted rounded-full h-3">
