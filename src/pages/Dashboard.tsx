@@ -122,29 +122,30 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="p-4 lg:p-8 space-y-6">
+    <div className="p-4 lg:p-8 space-y-5">
+      {/* Mobile Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-black text-foreground animate-in">Dashboard</h1>
-          <div className="flex items-center gap-3 mt-1 animate-in-delay-1">
-            <button onClick={() => setMonthOffset((o) => o - 1)} className="p-1 rounded-lg hover:bg-muted transition-colors">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl lg:text-3xl font-black text-foreground animate-in">Dashboard</h1>
+          <div className="flex items-center gap-2 mt-1 animate-in-delay-1">
+            <button onClick={() => setMonthOffset((o) => o - 1)} className="p-1.5 rounded-xl hover:bg-muted transition-colors active:scale-90">
               <ChevronLeft className="w-4 h-4 text-muted-foreground" />
             </button>
-            <span className="text-muted-foreground text-sm uppercase tracking-widest capitalize">
-              {format(refDate, "MMMM 'de' yyyy", { locale: ptBR })}
+            <span className="text-muted-foreground text-xs lg:text-sm uppercase tracking-widest capitalize">
+              {format(refDate, "MMM 'de' yyyy", { locale: ptBR })}
             </span>
             {isCurrentMonth && (
-              <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-[10px] font-bold uppercase tracking-wider animate-pulse">
-                ao vivo
+              <span className="px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400 text-[9px] font-bold uppercase tracking-wider animate-pulse">
+                live
               </span>
             )}
-            <button onClick={() => setMonthOffset((o) => o + 1)} className="p-1 rounded-lg hover:bg-muted transition-colors">
+            <button onClick={() => setMonthOffset((o) => o + 1)} className="p-1.5 rounded-xl hover:bg-muted transition-colors active:scale-90">
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
         </div>
-        <button onClick={() => setShowAddTx(true)} className="gradient-primary px-5 py-2.5 rounded-2xl text-foreground font-semibold text-sm hover:opacity-90 transition-opacity">
-          + Transação
+        <button onClick={() => setShowAddTx(true)} className="gradient-primary px-4 py-2.5 rounded-2xl text-foreground font-bold text-xs lg:text-sm hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20">
+          + Novo
         </button>
       </div>
 
