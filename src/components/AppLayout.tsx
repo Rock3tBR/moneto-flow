@@ -17,14 +17,14 @@ import {
 import { useFinance } from '@/contexts/FinanceContext';
 
 const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/transactions', icon: ArrowLeftRight, label: 'Extrato' },
-  { to: '/categories', icon: Tag, label: 'Categorias' },
-  { to: '/cards', icon: CreditCard, label: 'Cartões' },
-  { to: '/invoices', icon: FileText, label: 'Faturas' },
-  { to: '/savings', icon: PiggyBank, label: 'Pé de Meia' },
-  { to: '/recurring', icon: Repeat, label: 'Gastos Fixos' },
-  { to: '/simulation', icon: Calculator, label: 'Simulação' },
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard', mobileLabel: 'Home' },
+  { to: '/transactions', icon: ArrowLeftRight, label: 'Extrato', mobileLabel: 'Extrato' },
+  { to: '/categories', icon: Tag, label: 'Categorias', mobileLabel: 'Categorias' },
+  { to: '/cards', icon: CreditCard, label: 'Cartões', mobileLabel: 'Cartões' },
+  { to: '/invoices', icon: FileText, label: 'Faturas', mobileLabel: 'Faturas' },
+  { to: '/savings', icon: PiggyBank, label: 'Pé de Meia', mobileLabel: 'Metas' },
+  { to: '/recurring', icon: Repeat, label: 'Gastos Fixos', mobileLabel: 'Fixos' },
+  { to: '/simulation', icon: Calculator, label: 'Simulação', mobileLabel: 'Simular' },
 ];
 
 const AppLayout = () => {
