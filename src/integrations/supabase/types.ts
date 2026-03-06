@@ -250,6 +250,30 @@ export type Database = {
           },
         ]
       }
+      user_plans: {
+        Row: {
+          created_at: string | null
+          id: string
+          plan: Database["public"]["Enums"]["app_plan"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          plan?: Database["public"]["Enums"]["app_plan"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          plan?: Database["public"]["Enums"]["app_plan"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -258,7 +282,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      app_plan: "free" | "plus" | "pro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -385,6 +409,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_plan: ["free", "plus", "pro"],
+    },
   },
 } as const
