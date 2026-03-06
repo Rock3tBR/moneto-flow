@@ -122,54 +122,55 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="p-4 lg:p-8 space-y-6">
+    <div className="p-4 lg:p-8 space-y-5">
+      {/* Mobile Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-black text-foreground animate-in">Dashboard</h1>
-          <div className="flex items-center gap-3 mt-1 animate-in-delay-1">
-            <button onClick={() => setMonthOffset((o) => o - 1)} className="p-1 rounded-lg hover:bg-muted transition-colors">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl lg:text-3xl font-black text-foreground animate-in">Dashboard</h1>
+          <div className="flex items-center gap-2 mt-1 animate-in-delay-1">
+            <button onClick={() => setMonthOffset((o) => o - 1)} className="p-1.5 rounded-xl hover:bg-muted transition-colors active:scale-90">
               <ChevronLeft className="w-4 h-4 text-muted-foreground" />
             </button>
-            <span className="text-muted-foreground text-sm uppercase tracking-widest capitalize">
-              {format(refDate, "MMMM 'de' yyyy", { locale: ptBR })}
+            <span className="text-muted-foreground text-xs lg:text-sm uppercase tracking-widest capitalize">
+              {format(refDate, "MMM 'de' yyyy", { locale: ptBR })}
             </span>
             {isCurrentMonth && (
-              <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-[10px] font-bold uppercase tracking-wider animate-pulse">
-                ao vivo
+              <span className="px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400 text-[9px] font-bold uppercase tracking-wider animate-pulse">
+                live
               </span>
             )}
-            <button onClick={() => setMonthOffset((o) => o + 1)} className="p-1 rounded-lg hover:bg-muted transition-colors">
+            <button onClick={() => setMonthOffset((o) => o + 1)} className="p-1.5 rounded-xl hover:bg-muted transition-colors active:scale-90">
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
         </div>
-        <button onClick={() => setShowAddTx(true)} className="gradient-primary px-5 py-2.5 rounded-2xl text-foreground font-semibold text-sm hover:opacity-90 transition-opacity">
-          + Transação
+        <button onClick={() => setShowAddTx(true)} className="gradient-primary px-4 py-2.5 rounded-2xl text-foreground font-bold text-xs lg:text-sm hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20">
+          + Novo
         </button>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 lg:gap-4">
         {summaryCards.map((card, i) => (
-          <div key={card.label} className={`glass rounded-3xl p-4 lg:p-5 animate-in-delay-${Math.min(i + 1, 3)}`}>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
+          <div key={card.label} className={`glass rounded-2xl lg:rounded-3xl p-3 lg:p-5 animate-in-delay-${Math.min(i + 1, 3)}`}>
+            <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-xl flex items-center justify-center mb-2 lg:mb-3 ${
               card.variant === 'income' ? 'gradient-income' :
               card.variant === 'expense' ? 'gradient-expense' :
               card.variant === 'warning' ? 'gradient-warning' : 'gradient-primary'
             }`}>
-              <card.icon className="w-5 h-5 text-foreground" />
+              <card.icon className="w-4 h-4 lg:w-5 lg:h-5 text-foreground" />
             </div>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">{card.label}</p>
-            <p className="text-xl lg:text-2xl font-black text-foreground mt-1">{fmt(card.value)}</p>
+            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-muted-foreground">{card.label}</p>
+            <p className="text-base lg:text-2xl font-black text-foreground mt-0.5">{fmt(card.value)}</p>
           </div>
         ))}
       </div>
 
       {/* Card limit */}
       {creditCards.length > 0 && (
-        <div className="glass rounded-3xl p-5 animate-in-delay-2">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Limite de Cartões</h3>
+        <div className="glass rounded-2xl lg:rounded-3xl p-4 lg:p-5 animate-in-delay-2">
+          <div className="flex items-center justify-between mb-2 lg:mb-3">
+            <h3 className="text-[10px] lg:text-sm uppercase tracking-widest text-muted-foreground">Limite de Cartões</h3>
             <span className="text-foreground font-bold">{fmt(totalLimit - usedLimitByMonth)} disponível</span>
           </div>
           <div className="w-full bg-muted rounded-full h-3">
@@ -186,8 +187,8 @@ const Dashboard = () => {
       )}
 
       {/* Charts Row 1: Evolução + Categorias */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 glass rounded-3xl p-5">
+      <div className="grid lg:grid-cols-3 gap-3 lg:gap-4">
+        <div className="lg:col-span-2 glass rounded-2xl lg:rounded-3xl p-4 lg:p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Evolução de Gastos</h3>
             <div className="flex gap-1">
@@ -216,8 +217,8 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </div>
 
-        <div className="glass rounded-3xl p-5">
-          <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-4">Gastos por Categoria</h3>
+        <div className="glass rounded-2xl lg:rounded-3xl p-4 lg:p-5">
+          <h3 className="text-[10px] lg:text-sm uppercase tracking-widest text-muted-foreground mb-3 lg:mb-4">Gastos por Categoria</h3>
           {pieData.length > 0 ? (
             <>
               <ResponsiveContainer width="100%" height={180}>
@@ -246,9 +247,9 @@ const Dashboard = () => {
       </div>
 
       {/* Charts Row 2: Receitas + Por cartão */}
-      <div className="grid lg:grid-cols-2 gap-4">
-        <div className="glass rounded-3xl p-5">
-          <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-4">Receitas do Mês</h3>
+      <div className="grid lg:grid-cols-2 gap-3 lg:gap-4">
+        <div className="glass rounded-2xl lg:rounded-3xl p-4 lg:p-5">
+          <h3 className="text-[10px] lg:text-sm uppercase tracking-widest text-muted-foreground mb-3 lg:mb-4">Receitas do Mês</h3>
           {incomeData.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={incomeData} layout="vertical">
@@ -263,8 +264,8 @@ const Dashboard = () => {
           )}
         </div>
 
-        <div className="glass rounded-3xl p-5">
-          <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-4">Gastos por Cartão</h3>
+        <div className="glass rounded-2xl lg:rounded-3xl p-4 lg:p-5">
+          <h3 className="text-[10px] lg:text-sm uppercase tracking-widest text-muted-foreground mb-3 lg:mb-4">Gastos por Cartão</h3>
           {cardData.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={cardData} layout="vertical">
@@ -282,9 +283,9 @@ const Dashboard = () => {
 
       {/* Pé de Meia */}
       {savingsPieData.length > 0 && (
-        <div className="glass rounded-3xl p-5">
-          <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-4">Pé de Meia</h3>
-          <div className="grid lg:grid-cols-2 gap-4">
+        <div className="glass rounded-2xl lg:rounded-3xl p-4 lg:p-5">
+          <h3 className="text-[10px] lg:text-sm uppercase tracking-widest text-muted-foreground mb-3 lg:mb-4">Pé de Meia</h3>
+          <div className="grid lg:grid-cols-2 gap-3 lg:gap-4">
             <ResponsiveContainer width="100%" height={160}>
               <PieChart>
                 <Pie data={savingsPieData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} dataKey="value" stroke="none">

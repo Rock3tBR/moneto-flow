@@ -17,14 +17,14 @@ import {
 import { useFinance } from '@/contexts/FinanceContext';
 
 const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/transactions', icon: ArrowLeftRight, label: 'Extrato' },
-  { to: '/categories', icon: Tag, label: 'Categorias' },
-  { to: '/cards', icon: CreditCard, label: 'Cartões' },
-  { to: '/invoices', icon: FileText, label: 'Faturas' },
-  { to: '/savings', icon: PiggyBank, label: 'Pé de Meia' },
-  { to: '/recurring', icon: Repeat, label: 'Gastos Fixos' },
-  { to: '/simulation', icon: Calculator, label: 'Simulação' },
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard', mobileLabel: 'Home' },
+  { to: '/transactions', icon: ArrowLeftRight, label: 'Extrato', mobileLabel: 'Extrato' },
+  { to: '/categories', icon: Tag, label: 'Categorias', mobileLabel: 'Categorias' },
+  { to: '/cards', icon: CreditCard, label: 'Cartões', mobileLabel: 'Cartões' },
+  { to: '/invoices', icon: FileText, label: 'Faturas', mobileLabel: 'Faturas' },
+  { to: '/savings', icon: PiggyBank, label: 'Pé de Meia', mobileLabel: 'Metas' },
+  { to: '/recurring', icon: Repeat, label: 'Gastos Fixos', mobileLabel: 'Fixos' },
+  { to: '/simulation', icon: Calculator, label: 'Simulação', mobileLabel: 'Simular' },
 ];
 
 const AppLayout = () => {
@@ -91,27 +91,42 @@ const AppLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 pb-24 lg:pb-6">
+      <main className="flex-1 lg:ml-64 pb-28 lg:pb-6">
         <Outlet />
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="lg:hidden fixed bottom-6 left-4 right-4 glass-strong rounded-3xl py-2 px-2 flex justify-around z-30 shadow-2xl">
-        {navItems.slice(0, 6).map((item) => (
-          <RouterNavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === '/'}
-            className={({ isActive }) =>
-              `flex flex-col items-center gap-0.5 px-3 py-2 rounded-2xl text-xs transition-all ${
-                isActive ? 'text-primary bg-primary/10' : 'text-muted-foreground'
-              }`
-            }
-          >
-            <item.icon className="w-5 h-5" />
-            <span className="text-[10px]">{item.label}</span>
-          </RouterNavLink>
-        ))}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30">
+        <div className="mx-3 mb-4 bg-card/90 backdrop-blur-2xl border border-border/40 rounded-[1.75rem] py-1.5 px-1 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.6)]">
+          <div className="flex justify-around items-center">
+            {navItems.slice(0, 5).map((item) => (
+              <RouterNavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === '/'}
+                className={({ isActive }) =>
+                  `relative flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all duration-300 ${
+                    isActive
+                      ? 'text-primary'
+                      : 'text-muted-foreground active:scale-90'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <div className="absolute inset-1 rounded-xl bg-primary/12 transition-all duration-300" />
+                    )}
+                    <item.icon className={`relative w-[22px] h-[22px] transition-all duration-300 ${isActive ? 'scale-110' : ''}`} />
+                    <span className={`relative text-[9px] font-semibold mt-0.5 transition-all duration-300 ${isActive ? 'opacity-100' : 'opacity-70'}`}>
+                      {item.mobileLabel}
+                    </span>
+                  </>
+                )}
+              </RouterNavLink>
+            ))}
+          </div>
+        </div>
       </nav>
     </div>
   );
