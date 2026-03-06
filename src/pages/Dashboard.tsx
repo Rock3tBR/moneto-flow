@@ -187,8 +187,8 @@ const Dashboard = () => {
       )}
 
       {/* Charts Row 1: Evolução + Categorias */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 glass rounded-3xl p-5">
+      <div className="grid lg:grid-cols-3 gap-3 lg:gap-4">
+        <div className="lg:col-span-2 glass rounded-2xl lg:rounded-3xl p-4 lg:p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Evolução de Gastos</h3>
             <div className="flex gap-1">
