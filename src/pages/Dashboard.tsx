@@ -150,18 +150,18 @@ const Dashboard = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 lg:gap-4">
         {summaryCards.map((card, i) => (
-          <div key={card.label} className={`glass rounded-3xl p-4 lg:p-5 animate-in-delay-${Math.min(i + 1, 3)}`}>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
+          <div key={card.label} className={`glass rounded-2xl lg:rounded-3xl p-3 lg:p-5 animate-in-delay-${Math.min(i + 1, 3)}`}>
+            <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-xl flex items-center justify-center mb-2 lg:mb-3 ${
               card.variant === 'income' ? 'gradient-income' :
               card.variant === 'expense' ? 'gradient-expense' :
               card.variant === 'warning' ? 'gradient-warning' : 'gradient-primary'
             }`}>
-              <card.icon className="w-5 h-5 text-foreground" />
+              <card.icon className="w-4 h-4 lg:w-5 lg:h-5 text-foreground" />
             </div>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">{card.label}</p>
-            <p className="text-xl lg:text-2xl font-black text-foreground mt-1">{fmt(card.value)}</p>
+            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-muted-foreground">{card.label}</p>
+            <p className="text-base lg:text-2xl font-black text-foreground mt-0.5">{fmt(card.value)}</p>
           </div>
         ))}
       </div>
