@@ -51,45 +51,45 @@ const CardsPage = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in-delay-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 animate-in-delay-1">
         {creditCards.map((card) => {
           const used = calculateCardUsedLimit(card, transactions, recurringExpenses, refMonth, refYear);
           const limit = Number(card.limit_amount);
           const pct = limit > 0 ? (used / limit) * 100 : 0;
           return (
-            <div key={card.id} className="relative overflow-hidden rounded-3xl p-6 gradient-primary shadow-2xl group min-h-[200px] flex flex-col justify-between">
-              <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-foreground/5" />
-              <div className="absolute -right-4 top-12 w-24 h-24 rounded-full bg-foreground/5" />
+            <div key={card.id} className="relative overflow-hidden rounded-2xl lg:rounded-3xl p-4 lg:p-6 gradient-primary shadow-2xl group min-h-[170px] lg:min-h-[200px] flex flex-col justify-between">
+              <div className="absolute -right-8 -top-8 w-32 lg:w-40 h-32 lg:h-40 rounded-full bg-foreground/5" />
+              <div className="absolute -right-4 top-10 w-20 lg:w-24 h-20 lg:h-24 rounded-full bg-foreground/5" />
 
               <div className="flex items-start justify-between relative z-10">
-                <div>
-                  <p className="text-foreground/70 text-xs uppercase tracking-widest">Cartão de Crédito</p>
-                  <p className="text-foreground text-xl font-black mt-1">{card.name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-foreground/70 text-[10px] lg:text-xs uppercase tracking-widest">Cartão de Crédito</p>
+                  <p className="text-foreground text-lg lg:text-xl font-black mt-0.5 truncate">{card.name}</p>
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => setEditItem(card)} className="opacity-0 group-hover:opacity-100 text-foreground/50 hover:text-foreground transition-all">
-                    <Pencil className="w-5 h-5" />
+                <div className="flex gap-1.5 ml-2">
+                  <button onClick={() => setEditItem(card)} className="lg:opacity-0 lg:group-hover:opacity-100 text-foreground/50 hover:text-foreground transition-all p-1.5">
+                    <Pencil className="w-4 h-4 lg:w-5 lg:h-5" />
                   </button>
-                  <button onClick={() => deleteCreditCard(card.id)} className="opacity-0 group-hover:opacity-100 text-foreground/50 hover:text-foreground transition-all">
-                    <Trash2 className="w-5 h-5" />
+                  <button onClick={() => deleteCreditCard(card.id)} className="lg:opacity-0 lg:group-hover:opacity-100 text-foreground/50 hover:text-foreground transition-all p-1.5">
+                    <Trash2 className="w-4 h-4 lg:w-5 lg:h-5" />
                   </button>
                 </div>
               </div>
 
-              <div className="relative z-10 space-y-3">
-                <div className="flex justify-between text-sm text-foreground/80">
-                  <span>Utilizado: {fmt(used)} ({Math.min(pct, 100).toFixed(1)}%)</span>
-                  <span>Limite: {fmt(limit)}</span>
+              <div className="relative z-10 space-y-2 lg:space-y-3">
+                <div className="flex justify-between text-xs lg:text-sm text-foreground/80">
+                  <span>Usado: {fmt(used)}</span>
+                  <span>{Math.min(pct, 100).toFixed(0)}%</span>
                 </div>
-                <div className="w-full bg-foreground/20 rounded-full h-2.5">
+                <div className="w-full bg-foreground/20 rounded-full h-2">
                   <div
-                    className={`h-2.5 rounded-full transition-all ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-foreground/70'}`}
+                    className={`h-2 rounded-full transition-all ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-foreground/70'}`}
                     style={{ width: `${Math.min(pct, 100)}%` }}
                   />
                 </div>
-                <div className="flex justify-between text-xs text-foreground/60">
-                  <span>Fecha dia {card.closing_day}</span>
-                  <span>Vence dia {card.due_day}</span>
+                <div className="flex justify-between text-[10px] lg:text-xs text-foreground/60">
+                  <span>Fecha dia {card.closing_day} • Vence dia {card.due_day}</span>
+                  <span>{fmt(limit)}</span>
                 </div>
               </div>
             </div>
