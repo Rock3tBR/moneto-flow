@@ -97,11 +97,11 @@ const CardsPage = () => {
         })}
 
         {creditCards.length === 0 && (
-          <div className="col-span-full glass rounded-3xl p-8 text-center space-y-3">
-            <CreditCard className="w-12 h-12 text-muted-foreground mx-auto" />
-            <p className="text-foreground font-bold">Nenhum cartão cadastrado</p>
-            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-              Cadastre seus cartões de crédito para acompanhar faturas, limites disponíveis e gastos parcelados.
+          <div className="col-span-full glass rounded-2xl lg:rounded-3xl p-6 lg:p-8 text-center space-y-3">
+            <CreditCard className="w-10 h-10 lg:w-12 lg:h-12 text-muted-foreground mx-auto" />
+            <p className="text-foreground font-bold text-sm lg:text-base">Nenhum cartão cadastrado</p>
+            <p className="text-muted-foreground text-xs lg:text-sm max-w-sm mx-auto">
+              Cadastre seus cartões de crédito para acompanhar faturas, limites e gastos parcelados.
             </p>
           </div>
         )}
