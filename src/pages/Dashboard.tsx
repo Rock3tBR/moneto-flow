@@ -13,6 +13,8 @@ const COLORS = ['hsl(234, 89%, 74%)', 'hsl(160, 84%, 39%)', 'hsl(347, 77%, 50%)'
 
 const Dashboard = () => {
   const { transactions, categories, creditCards, savingsGoals, savingsTransactions, recurringExpenses } = useFinance();
+  const { plan } = usePlan();
+  const isNewAccount = transactions.length === 0 && creditCards.length === 0;
   const [showAddTx, setShowAddTx] = useState(false);
   const [monthOffset, setMonthOffset] = useState(0);
   const [dayRange, setDayRange] = useState(30);
