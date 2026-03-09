@@ -55,23 +55,29 @@ const AppLayout = () => {
         </div>
 
         <nav className="flex-1 px-3 space-y-1 mt-2">
-          {navItems.map((item) => (
-            <RouterNavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/'}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
-                  isActive
-                    ? 'bg-primary/15 text-primary'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                }`
-              }
-            >
-              <item.icon className="w-5 h-5" />
-              {item.label}
-            </RouterNavLink>
-          ))}
+          {navItems.map((item) => {
+            const locked = !canAccess(item.to);
+            return (
+              <RouterNavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === '/'}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
+                    isActive
+                      ? 'bg-primary/15 text-primary'
+                      : locked
+                        ? 'text-muted-foreground/50'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`
+                }
+              >
+                <item.icon className="w-5 h-5" />
+                {item.label}
+                {locked && <Lock className="w-3.5 h-3.5 ml-auto text-muted-foreground/50" />}
+              </RouterNavLink>
+            );
+          })}
         </nav>
 
         <div className="p-3 space-y-2">
