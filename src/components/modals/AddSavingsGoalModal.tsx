@@ -16,7 +16,8 @@ const COLORS = [
 interface Props { onClose: () => void; editData?: SavingsGoal; }
 
 const AddSavingsGoalModal = ({ onClose, editData }: Props) => {
-  const { addSavingsGoal, updateSavingsGoal } = useFinance();
+  const { addSavingsGoal, updateSavingsGoal, savingsGoals } = useFinance();
+  const { limits } = usePlan();
   const isEdit = !!editData;
 
   const [name, setName] = useState(editData?.name || '');

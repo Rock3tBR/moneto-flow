@@ -23,6 +23,10 @@ const AddCardModal = ({ onClose, editData }: Props) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !closingDay || !dueDay) return;
+    if (!isEdit && creditCards.length >= limits.maxCards) {
+      toast.error(`Limite de ${limits.maxCards} cartões atingido. Faça upgrade do plano!`);
+      return;
+    }
     setSubmitting(true);
     if (isEdit) {
       await updateCreditCard(editData.id, {
