@@ -2,12 +2,13 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-
-type PlanType = 'free' | 'plus' | 'pro';
+import { PlanType, PLAN_CONFIG, canAccessPage } from '@/lib/planLimits';
 
 interface PlanContextType {
   plan: PlanType;
   loading: boolean;
+  canAccess: (page: string) => boolean;
+  limits: typeof PLAN_CONFIG['free'];
 }
 
 const PlanContext = createContext<PlanContextType | undefined>(undefined);
@@ -69,8 +70,11 @@ export const PlanProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [loading, plan, user, hasShownToast]);
 
+  const canAccess = (page: string) => canAccessPage(plan, page);
+  const limits = PLAN_CONFIG[plan];
+
   return (
-    <PlanContext.Provider value={{ plan, loading }}>
+    <PlanContext.Provider value={{ plan, loading, canAccess, limits }}>
       {children}
     </PlanContext.Provider>
   );

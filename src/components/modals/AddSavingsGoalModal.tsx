@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
+import { usePlan } from '@/contexts/PlanContext';
 import { X } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
 type SavingsGoal = Tables<'savings_goals'>;
@@ -14,7 +16,8 @@ const COLORS = [
 interface Props { onClose: () => void; editData?: SavingsGoal; }
 
 const AddSavingsGoalModal = ({ onClose, editData }: Props) => {
-  const { addSavingsGoal, updateSavingsGoal } = useFinance();
+  const { addSavingsGoal, updateSavingsGoal, savingsGoals } = useFinance();
+  const { limits } = usePlan();
   const isEdit = !!editData;
 
   const [name, setName] = useState(editData?.name || '');
@@ -26,6 +29,10 @@ const AddSavingsGoalModal = ({ onClose, editData }: Props) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !targetAmount) return;
+    if (!isEdit && savingsGoals.length >= limits.maxSavingsGoals) {
+      toast.error(`Limite de ${limits.maxSavingsGoals} meta(s) atingido. Faça upgrade do plano!`);
+      return;
+    }
     setSubmitting(true);
     if (isEdit) {
       await updateSavingsGoal(editData.id, {
