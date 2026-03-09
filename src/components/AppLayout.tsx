@@ -104,7 +104,7 @@ const AppLayout = () => {
 
       {/* Main Content */}
       <main className="flex-1 lg:ml-64 pb-28 lg:pb-6">
-        <Outlet />
+        {currentPageAllowed ? <Outlet /> : <UpgradeGate />}
       </main>
 
       {/* Mobile Bottom Nav */}
