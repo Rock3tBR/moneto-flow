@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
+import { usePlan } from '@/contexts/PlanContext';
 import { X } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
 type SavingsGoal = Tables<'savings_goals'>;
