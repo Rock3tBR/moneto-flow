@@ -70,8 +70,11 @@ export const PlanProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [loading, plan, user, hasShownToast]);
 
+  const canAccess = (page: string) => canAccessPage(plan, page);
+  const limits = PLAN_CONFIG[plan];
+
   return (
-    <PlanContext.Provider value={{ plan, loading }}>
+    <PlanContext.Provider value={{ plan, loading, canAccess, limits }}>
       {children}
     </PlanContext.Provider>
   );
