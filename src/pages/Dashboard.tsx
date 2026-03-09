@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
+import { usePlan } from '@/contexts/PlanContext';
 import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TrendingUp, TrendingDown, Wallet, PiggyBank, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import AddTransactionModal from '@/components/modals/AddTransactionModal';
 import { calculateTotalUsedLimit } from '@/lib/cardLimitUtils';
+import PlanComparisonCard from '@/components/PlanComparisonCard';
 
 const COLORS = ['hsl(234, 89%, 74%)', 'hsl(160, 84%, 39%)', 'hsl(347, 77%, 50%)', 'hsl(38, 92%, 50%)', 'hsl(280, 65%, 60%)', 'hsl(200, 70%, 55%)'];
 
