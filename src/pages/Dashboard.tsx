@@ -170,6 +170,9 @@ const Dashboard = () => {
         ))}
       </div>
 
+      {/* Plan comparison for new accounts */}
+      {isNewAccount && plan === 'free' && <PlanComparisonCard />}
+
       {/* Card limit */}
       {creditCards.length > 0 && (
         <div className="glass rounded-2xl lg:rounded-3xl p-4 lg:p-5 animate-in-delay-2">
