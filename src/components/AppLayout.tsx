@@ -18,6 +18,7 @@ import {
 import { useFinance } from '@/contexts/FinanceContext';
 import { usePlan } from '@/contexts/PlanContext';
 import UpgradeGate from '@/components/UpgradeGate';
+import PlanBadge from '@/components/PlanBadge';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', mobileLabel: 'Home' },
@@ -81,6 +82,7 @@ const AppLayout = () => {
         </nav>
 
         <div className="p-3 space-y-2">
+          <PlanBadge />
           <button
             onClick={() => fetchData()}
             disabled={loading}
