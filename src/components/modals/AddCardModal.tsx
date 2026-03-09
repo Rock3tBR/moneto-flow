@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
-import { X } from 'lucide-react';
+import { usePlan } from '@/contexts/PlanContext';
+import { X, Lock } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
 type CreditCard = Tables<'credit_cards'>;
@@ -8,7 +10,8 @@ type CreditCard = Tables<'credit_cards'>;
 interface Props { onClose: () => void; editData?: CreditCard; }
 
 const AddCardModal = ({ onClose, editData }: Props) => {
-  const { addCreditCard, updateCreditCard } = useFinance();
+  const { addCreditCard, updateCreditCard, creditCards } = useFinance();
+  const { limits, plan } = usePlan();
   const isEdit = !!editData;
 
   const [name, setName] = useState(editData?.name || '');
