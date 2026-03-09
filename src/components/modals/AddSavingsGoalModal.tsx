@@ -29,6 +29,10 @@ const AddSavingsGoalModal = ({ onClose, editData }: Props) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !targetAmount) return;
+    if (!isEdit && savingsGoals.length >= limits.maxSavingsGoals) {
+      toast.error(`Limite de ${limits.maxSavingsGoals} meta(s) atingido. Faça upgrade do plano!`);
+      return;
+    }
     setSubmitting(true);
     if (isEdit) {
       await updateSavingsGoal(editData.id, {
