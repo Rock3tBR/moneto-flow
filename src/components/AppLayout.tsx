@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink as RouterNavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink as RouterNavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
@@ -13,8 +13,11 @@ import {
   RefreshCw,
   PiggyBank,
   Repeat,
+  Lock,
 } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
+import { usePlan } from '@/contexts/PlanContext';
+import UpgradeGate from '@/components/UpgradeGate';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', mobileLabel: 'Home' },
