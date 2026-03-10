@@ -16,6 +16,7 @@ import InvoicesPage from "@/pages/InvoicesPage";
 import SimulationPage from "@/pages/SimulationPage";
 import SavingsPage from "@/pages/SavingsPage";
 import RecurringExpensesPage from "@/pages/RecurringExpensesPage";
+import AdminPage from "@/pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
