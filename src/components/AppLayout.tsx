@@ -98,7 +98,7 @@ const AppLayout = () => {
             </RouterNavLink>
           )}
 
-        <div className="p-3 space-y-2">
+        </nav>
           <PlanBadge />
           <button
             onClick={() => fetchData()}
