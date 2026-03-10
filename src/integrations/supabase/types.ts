@@ -274,15 +274,56 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_list_users_with_plans: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          plan: string
+          user_id: string
+        }[]
+      }
+      admin_update_user_plan: {
+        Args: {
+          _new_plan: Database["public"]["Enums"]["app_plan"]
+          _target_user_id: string
+        }
+        Returns: undefined
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_plan: "free" | "plus" | "pro"
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -411,6 +452,7 @@ export const Constants = {
   public: {
     Enums: {
       app_plan: ["free", "plus", "pro"],
+      app_role: ["admin", "user"],
     },
   },
 } as const

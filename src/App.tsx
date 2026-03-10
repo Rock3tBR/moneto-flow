@@ -16,6 +16,7 @@ import InvoicesPage from "@/pages/InvoicesPage";
 import SimulationPage from "@/pages/SimulationPage";
 import SavingsPage from "@/pages/SavingsPage";
 import RecurringExpensesPage from "@/pages/RecurringExpensesPage";
+import AdminPage from "@/pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="savings" element={<SavingsPage />} />
               <Route path="recurring" element={<RecurringExpensesPage />} />
               <Route path="simulation" element={<SimulationPage />} />
+              <Route path="admin" element={<AdminPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
