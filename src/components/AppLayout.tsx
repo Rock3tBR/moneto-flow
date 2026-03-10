@@ -82,7 +82,21 @@ const AppLayout = () => {
               </RouterNavLink>
             );
           })}
-        </nav>
+          {isAdmin && (
+            <RouterNavLink
+              to="/admin"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
+                  isActive
+                    ? 'bg-primary/15 text-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`
+              }
+            >
+              <Shield className="w-5 h-5" />
+              Admin
+            </RouterNavLink>
+          )}
 
         <div className="p-3 space-y-2">
           <PlanBadge />
