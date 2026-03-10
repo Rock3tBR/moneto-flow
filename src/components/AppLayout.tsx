@@ -14,9 +14,11 @@ import {
   PiggyBank,
   Repeat,
   Lock,
+  Shield,
 } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { usePlan } from '@/contexts/PlanContext';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import UpgradeGate from '@/components/UpgradeGate';
 import PlanBadge from '@/components/PlanBadge';
 
