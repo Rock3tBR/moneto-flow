@@ -53,7 +53,7 @@ const AdminPage = () => {
     setUpdating(targetUserId);
     const { error } = await supabase.rpc('admin_update_user_plan', {
       _target_user_id: targetUserId,
-      _new_plan: newPlan,
+      _new_plan: newPlan as any,
     });
     if (error) {
       console.error('Error updating plan:', error);
