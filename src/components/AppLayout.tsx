@@ -99,6 +99,8 @@ const AppLayout = () => {
           )}
 
         </nav>
+
+        <div className="p-3 space-y-2">
           <PlanBadge />
           <button
             onClick={() => fetchData()}
