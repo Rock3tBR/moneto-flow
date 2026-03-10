@@ -37,9 +37,10 @@ const AppLayout = () => {
   const { user, signOut } = useAuth();
   const { fetchData, loading } = useFinance();
   const { canAccess } = usePlan();
+  const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
   const location = useLocation();
-  const currentPageAllowed = canAccess(location.pathname);
+  const currentPageAllowed = location.pathname === '/admin' ? isAdmin : canAccess(location.pathname);
 
   const handleSignOut = async () => {
     await signOut();
