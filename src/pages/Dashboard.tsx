@@ -3,11 +3,12 @@ import { useFinance } from '@/contexts/FinanceContext';
 import { usePlan } from '@/contexts/PlanContext';
 import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, PiggyBank, ChevronLeft, ChevronRight, FileUp } from 'lucide-react';
 import { AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import AddTransactionModal from '@/components/modals/AddTransactionModal';
 import { calculateTotalUsedLimit } from '@/lib/cardLimitUtils';
 import PlanComparisonCard from '@/components/PlanComparisonCard';
+import ImportInvoiceModal from '@/components/modals/ImportInvoiceModal';
 
 const COLORS = ['hsl(234, 89%, 74%)', 'hsl(160, 84%, 39%)', 'hsl(347, 77%, 50%)', 'hsl(38, 92%, 50%)', 'hsl(280, 65%, 60%)', 'hsl(200, 70%, 55%)'];
 
@@ -16,6 +17,7 @@ const Dashboard = () => {
   const { plan } = usePlan();
   const isNewAccount = transactions.length === 0 && creditCards.length === 0;
   const [showAddTx, setShowAddTx] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [monthOffset, setMonthOffset] = useState(0);
   const [dayRange, setDayRange] = useState(30);
 
@@ -148,9 +150,17 @@ const Dashboard = () => {
             </button>
           </div>
         </div>
-        <button onClick={() => setShowAddTx(true)} className="gradient-primary px-4 py-2.5 rounded-2xl text-foreground font-bold text-xs lg:text-sm hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20">
-          + Novo
-        </button>
+        <div className="flex items-center gap-2">
+          {(plan === 'plus' || plan === 'pro') && (
+            <button onClick={() => setShowImport(true)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-muted text-foreground font-bold text-xs lg:text-sm hover:bg-accent transition-all active:scale-95">
+              <FileUp className="w-4 h-4" />
+              <span className="hidden lg:inline">Importar PDF</span>
+            </button>
+          )}
+          <button onClick={() => setShowAddTx(true)} className="gradient-primary px-4 py-2.5 rounded-2xl text-foreground font-bold text-xs lg:text-sm hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20">
+            + Novo
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -316,6 +326,7 @@ const Dashboard = () => {
       )}
 
       {showAddTx && <AddTransactionModal onClose={() => setShowAddTx(false)} />}
+      {showImport && <ImportInvoiceModal onClose={() => setShowImport(false)} />}
     </div>
   );
 };
