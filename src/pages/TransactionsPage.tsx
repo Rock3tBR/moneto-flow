@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
+import { usePlan } from '@/contexts/PlanContext';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Trash2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, Pencil, ChevronLeft, ChevronRight, FileUp } from 'lucide-react';
 import AddTransactionModal from '@/components/modals/AddTransactionModal';
+import ImportInvoiceModal from '@/components/modals/ImportInvoiceModal';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Transaction = Tables<'transactions'>;
 
 const TransactionsPage = () => {
   const { transactions, categories, recurringExpenses, deleteTransaction } = useFinance();
+  const { plan } = usePlan();
   const [filter, setFilter] = useState<'all' | 'INCOME' | 'EXPENSE' | 'FIXED'>('all');
   const [catFilter, setCatFilter] = useState<string>('all');
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<Transaction | null>(null);
+  const [showImport, setShowImport] = useState(false);
   const [monthOffset, setMonthOffset] = useState(0);
 
   const now = new Date();
@@ -41,9 +45,17 @@ const TransactionsPage = () => {
     <div className="p-4 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl lg:text-3xl font-black text-foreground animate-in">Extrato</h1>
-        <button onClick={() => setShowAdd(true)} className="gradient-primary px-5 py-2.5 rounded-2xl text-foreground font-semibold text-sm">
-          + Transação
-        </button>
+        <div className="flex items-center gap-2">
+          {(plan === 'plus' || plan === 'pro') && (
+            <button onClick={() => setShowImport(true)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-muted text-foreground font-semibold text-sm hover:bg-accent transition-all">
+              <FileUp className="w-4 h-4" />
+              <span className="hidden sm:inline">Importar PDF</span>
+            </button>
+          )}
+          <button onClick={() => setShowAdd(true)} className="gradient-primary px-5 py-2.5 rounded-2xl text-foreground font-semibold text-sm">
+            + Transação
+          </button>
+        </div>
       </div>
 
       {/* Month nav */}
@@ -130,6 +142,7 @@ const TransactionsPage = () => {
           onClose={() => { setShowAdd(false); setEditItem(null); }}
         />
       )}
+      {showImport && <ImportInvoiceModal onClose={() => setShowImport(false)} />}
     </div>
   );
 };
